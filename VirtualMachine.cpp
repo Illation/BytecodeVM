@@ -84,6 +84,15 @@ void VirtualMachine::Interpret()
             }
             continue;
 
+            //Add values together
+            case Opcode::ADD:
+            {
+                char b = Pop();
+                char a = Pop();
+                Push(a + b);
+            }
+            continue;
+
             //print x chars to console
             case Opcode::PRINT:
             {
