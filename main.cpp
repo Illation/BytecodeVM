@@ -53,27 +53,32 @@ int main(int argc, char** argv)
         std::cout << "compiling " << filename << std::endl; 
         std::cout << std::endl; 
 
-        AssemblyCompiler* pCmp = new AssemblyCompiler(filename);
+        AssemblyCompiler* pCmp = new AssemblyCompiler();
+        pCmp->LoadSource(filename);
+
+        pCmp->Compile();
+
         std::string outname;
         if(hasEnding(filename, AssemblyExtension))
         {
             outname = filename.substr(0, filename.size() - AssemblyExtension.size()) + ExecutableExtension; 
         } 
         else outname = filename + ExecutableExtension;
-        if(!pCmp->Compile(outname))
+        pCmp->Save(outname);
+
+        std::cout << std::endl; 
+        std::cout << "=======================" << std::endl; 
+        if(!(pCmp->GetState() == AssemblyCompiler::CompState::COMPILED))
         {
-            std::cout << std::endl; 
-            std::cout << "=======================" << std::endl; 
             std::cout << "script compilation failed!" << std::endl; 
         }
+        else
+        {
+            std::cout << "script compilation succeded! >> output file: " << outname << std::endl; 
+        }
+
         delete pCmp; 
         pCmp = nullptr;
-
-        delete pCmp;
-        pCmp = nullptr;
-        
-        std::cout << "=======================" << std::endl; 
-        std::cout << "script compilation succeded! >> output file: " << outname << std::endl; 
     }
     else
     {

@@ -6,11 +6,33 @@
 class AssemblyCompiler
 {
 public:
-    AssemblyCompiler(std::string filename);
+    enum class CompState
+    {
+        INIT,
+        SOURCE,
+        COMPILED,
+        FAILED
+    };
+
+public:
+    AssemblyCompiler();
     ~AssemblyCompiler();
 
-    bool Compile(std::string filename);
+    void SetSource(std::vector<std::string> lines);
+    bool LoadSource(std::string filename);
+
+    bool Compile();
+
+    CompState GetState(){return m_State;}
+    bool Save(std::string filename);
+    std::vector<char> GetBytecode();
 
 private:
+    bool ParseChar(char &out, std::string &arguments);
+
+private:
+    CompState m_State = CompState::INIT;
+
     std::vector<std::string> m_Lines;
+    std::vector<char> m_Bytecode;
 };
