@@ -67,6 +67,9 @@ int main(int argc, char** argv)
         if(!(pCmp->GetState() == AssemblyCompiler::CompState::COMPILED))
         {
             std::cout << "script compilation failed!" << std::endl; 
+            delete pCmp; 
+            pCmp = nullptr;
+            return 3;
         }
         else
         {
@@ -75,6 +78,44 @@ int main(int argc, char** argv)
 
         delete pCmp; 
         pCmp = nullptr;
+    }
+    else if(std::string(argv[1]) == "cRun")
+    {
+        std::cout << "compiling " << filename << std::endl; 
+        std::cout << std::endl; 
+
+        AssemblyCompiler* pCmp = new AssemblyCompiler();
+        pCmp->LoadSource(filename);
+
+        pCmp->Compile();
+
+        std::cout << std::endl; 
+        std::cout << "=======================" << std::endl; 
+        if(!(pCmp->GetState() == AssemblyCompiler::CompState::COMPILED))
+        {
+            std::cout << "script compilation failed!" << std::endl; 
+            delete pCmp; 
+            pCmp = nullptr;
+            return 3;
+        }
+        std::cout << "running " << filename << std::endl; 
+        std::cout << std::endl; 
+
+        VirtualMachine* pVM = new VirtualMachine();
+
+        pVM->SetProgram(pCmp->GetBytecode());
+
+        delete pCmp; 
+        pCmp = nullptr;
+
+        pVM->Interpret();
+
+        delete pVM;
+        pVM = nullptr;
+
+        std::cout << std::endl; 
+        std::cout << "=======================" << std::endl; 
+
     }
     else
     {

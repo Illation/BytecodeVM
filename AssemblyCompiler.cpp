@@ -103,10 +103,7 @@ bool AssemblyCompiler::Compile()
                             if(arguments.size()==0)
                             {
                                 std::cerr << "[ASM CMP] " << line << ", " << opname << ": Incorrect amount of arguments!" << std::endl;
-                                std::cerr << m_Lines[line] << std::endl;
-                                std::cerr << "[ASM CMP]" <<  std::endl;
-                                std::cerr << "[ASM CMP] Aborting compilation!" <<  std::endl;
-                                m_State = CompState::FAILED;
+                                PrintAbort(line);
                                 return false;
                             }
                             char parsed;
@@ -117,12 +114,63 @@ bool AssemblyCompiler::Compile()
                             }
                             else
                             {
-                                std::cerr << m_Lines[line] << std::endl;
-                                std::cerr << "[ASM CMP]" <<  std::endl;
-                                std::cerr << "[ASM CMP] Aborting compilation!" <<  std::endl;
-                                m_State = CompState::FAILED;
+                                PrintAbort(line);
                                 return false;
                             } 
+                        }
+                        break;
+
+                    case Opcode::LITERAL_ARRAY:
+                        {
+                            if(arguments.size()==0)
+                            {
+                                std::cerr << "[ASM CMP] " << line << ", " << opname << ": Incorrect amount of arguments!" << std::endl;
+                                PrintAbort(line);
+                                return false;
+                            }
+                            m_Bytecode.push_back(static_cast<char>(code));
+
+                            std::vector<char> arr;
+                            if(arguments[0] == '\"')
+                            {
+                                if(arguments.size()==1)
+                                {
+                                    std::cerr << "[ASM CMP] " << line << ", " << opname << ": Incorrect argument size!" << std::endl;
+                                    PrintAbort(line);
+                                    return false;
+                                }
+                                int j = 1;
+                                while(arguments[j] != '\"')
+                                {
+                                    if(j >= arguments.size())
+                                    {
+                                        std::cerr << "[ASM CMP] " << line << ", " << opname << ": Expected ' \" ' !" << std::endl;
+                                        PrintAbort(line);
+                                        return false;
+                                    }
+                                    arr.push_back(arguments[j]);
+
+                                    ++j;
+                                }
+                            }
+                            else
+                            {
+                                while(arguments.size() > 0)
+                                {
+                                    char parsed;
+                                    if(ParseChar(parsed, arguments))
+                                    {
+                                        arr.push_back(parsed);
+                                    }
+                                    else
+                                    {
+                                        PrintAbort(line);
+                                        return false;
+                                    } 
+                                }
+                            }
+                            m_Bytecode.push_back(arr.size());
+                            m_Bytecode.insert(m_Bytecode.end(), arr.begin(), arr.end());
                         }
                         break;
 
@@ -134,10 +182,7 @@ bool AssemblyCompiler::Compile()
             else
             {
                 std::cerr << "[ASM CMP] " << line << ": Invalid Opcode '" << opname << "'!" << std::endl;
-                std::cerr << m_Lines[line] << std::endl;
-                std::cerr << "[ASM CMP]" <<  std::endl;
-                std::cerr << "[ASM CMP] Aborting compilation!" <<  std::endl;
-                m_State = CompState::FAILED;
+                PrintAbort(line);
                 return false;
             }
         }
@@ -220,4 +265,11 @@ bool AssemblyCompiler::ParseChar(char &out, std::string &arguments)
         return true;
     }
     return false;
+}
+void AssemblyCompiler::PrintAbort(unsigned int line)
+{
+    std::cerr << m_Lines[line] << std::endl;
+    std::cerr << "[ASM CMP]" <<  std::endl;
+    std::cerr << "[ASM CMP] Aborting compilation!" <<  std::endl;
+    m_State = CompState::FAILED;
 }

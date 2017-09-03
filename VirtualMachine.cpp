@@ -72,6 +72,18 @@ void VirtualMachine::Interpret()
             }
             continue;
 
+            //Add multiple bytes to the stack
+            case Opcode::LITERAL_ARRAY:
+            {
+                char numValues = m_Bytecode[++i];
+                while(numValues > 0)
+                {
+                    Push(m_Bytecode[++i]);
+                    --numValues;
+                }
+            }
+            continue;
+
             //print x chars to console
             case Opcode::PRINT:
             {

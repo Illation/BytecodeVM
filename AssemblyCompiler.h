@@ -29,6 +29,7 @@ public:
 
 private:
     bool ParseChar(char &out, std::string &arguments);
+    void PrintAbort(unsigned int line);
 
 private:
     CompState m_State = CompState::INIT;
