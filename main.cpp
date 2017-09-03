@@ -33,14 +33,10 @@ int main(int argc, char** argv)
         std::cout << "running " << filename << std::endl; 
         std::cout << std::endl; 
         
-        //Load the file as binary info
-        //std::ifstream input( filename, std::ios::binary );
-        char* bytecode = TestBytecode;
-        int bytecodeSize = TestBytecodeSize;
-
         //Create a new VM / interpreter
         VirtualMachine* pVM = new VirtualMachine();
-        pVM->Interpret(bytecode, bytecodeSize);
+        pVM->LoadProgram(filename);
+        pVM->Interpret();
         delete pVM;
         pVM = nullptr;
         

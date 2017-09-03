@@ -1,7 +1,8 @@
 #include "VirtualMachine.h"
 
+#include <fstream>
+#include <iterator>
 #include <cassert>
-#include <string>
 #include <iostream>
 
 #include "Opcode.h"
@@ -15,17 +16,58 @@ VirtualMachine::~VirtualMachine()
     delete[] m_Stack;
 }
 
-void VirtualMachine::Interpret(char* bytecode, int size)
+bool VirtualMachine::LoadProgram(std::string filename)
 {
-    for(unsigned int i = 0; i < size; ++i)
+    std::ifstream file( filename, std::ios::binary );
+    if(!file.good())
     {
-        Opcode operation = static_cast<Opcode>(bytecode[i]);
+        std::cerr << "[VM] Could not open bytecode executable" << std::endl;
+        return false;
+    }
+
+    file.unsetf(std::ios::skipws);
+
+    // get its size:
+    std::streampos fileSize;
+    
+    file.seekg(0, std::ios::end);
+    fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+    
+    // reserve capacity
+    m_Bytecode.reserve(fileSize);
+    
+    // read the data:
+    m_Bytecode.insert(m_Bytecode.begin(),
+        std::istream_iterator<char>(file),
+        std::istream_iterator<char>());
+
+    ProgramLoaded = true;
+    return true;
+}
+void VirtualMachine::SetProgram(std::vector<char> bytecode)
+{
+    m_Bytecode = bytecode;
+    ProgramLoaded = true;
+}
+
+void VirtualMachine::Interpret()
+{
+    if(!ProgramLoaded)
+    {
+        std::cerr << "[VM] No program loaded" << std::endl;
+        return;
+    }
+
+    for(unsigned int i = 0; i < m_Bytecode.size(); ++i)
+    {
+        Opcode operation = static_cast<Opcode>(m_Bytecode[i]);
         switch(operation)
         {
             //Add a byte to the stack
             case Opcode::LITERAL:
             {
-                char value = bytecode[++i];
+                char value = m_Bytecode[++i];
                 Push(value);
             }
             continue;
