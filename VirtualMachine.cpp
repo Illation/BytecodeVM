@@ -7,13 +7,14 @@
 
 #include "Opcode.h"
 
-VirtualMachine::VirtualMachine()
+VirtualMachine::VirtualMachine(unsigned int stackSize)
+    :m_StackSize(stackSize)
 {
-    m_Stack = new char[MAX_STACK];
+    m_RAM = new char[MAX_RAM];
 }
 VirtualMachine::~VirtualMachine()
 {
-    delete[] m_Stack;
+    delete[] m_RAM;
 }
 
 bool VirtualMachine::LoadProgram(std::string filename)
@@ -35,19 +36,26 @@ bool VirtualMachine::LoadProgram(std::string filename)
     file.seekg(0, std::ios::beg);
     
     // reserve capacity
-    m_Bytecode.reserve(fileSize);
+    std::vector<char> bytecode;
+    bytecode.reserve(fileSize);
     
     // read the data:
-    m_Bytecode.insert(m_Bytecode.begin(),
+    bytecode.insert(bytecode.begin(),
         std::istream_iterator<char>(file),
         std::istream_iterator<char>());
 
-    ProgramLoaded = true;
+    SetProgram(bytecode);
+
     return true;
 }
 void VirtualMachine::SetProgram(std::vector<char> bytecode)
 {
-    m_Bytecode = bytecode;
+    m_NumInstructions = bytecode.size();
+    m_HeapBase = m_NumInstructions + m_StackSize;
+    for(int i = 0; i < m_NumInstructions; ++i)
+    {
+        m_RAM[i+m_StackSize] = bytecode[i];
+    } 
     ProgramLoaded = true;
 }
 
@@ -59,15 +67,15 @@ void VirtualMachine::Interpret()
         return;
     }
 
-    for(unsigned int i = 0; i < m_Bytecode.size(); ++i)
+    for(m_ProgramCounter = m_StackSize; m_ProgramCounter < m_HeapBase; ++m_ProgramCounter)
     {
-        Opcode operation = static_cast<Opcode>(m_Bytecode[i]);
+        Opcode operation = static_cast<Opcode>(m_RAM[m_ProgramCounter]);
         switch(operation)
         {
             //Add a byte to the stack
             case Opcode::LITERAL:
             {
-                char value = m_Bytecode[++i];
+                char value = m_RAM[++m_ProgramCounter];
                 Push(value);
             }
             continue;
@@ -75,10 +83,10 @@ void VirtualMachine::Interpret()
             //Add multiple bytes to the stack
             case Opcode::LITERAL_ARRAY:
             {
-                char numValues = m_Bytecode[++i];
+                char numValues = m_RAM[++m_ProgramCounter];
                 while(numValues > 0)
                 {
-                    Push(m_Bytecode[++i]);
+                    Push(m_RAM[++m_ProgramCounter]);
                     --numValues;
                 }
             }
@@ -111,11 +119,11 @@ void VirtualMachine::Interpret()
 
 void VirtualMachine::Push(char value)
 {
-    assert(m_StackPointer + 1 < MAX_STACK); 
-    m_Stack[++m_StackPointer] = value;
+    assert(m_StackPointer + 1 < m_StackSize); 
+    m_RAM[++m_StackPointer] = value;
 }
 char VirtualMachine::Pop()
 {
     assert(m_StackPointer >= 0); 
-    return m_Stack[m_StackPointer--];
+    return m_RAM[m_StackPointer--];
 }

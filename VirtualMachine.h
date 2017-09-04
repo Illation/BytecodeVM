@@ -6,7 +6,7 @@
 class VirtualMachine
 {
 public:
-    VirtualMachine();
+    VirtualMachine(unsigned int stackSize = 1024);
     ~VirtualMachine();
 
     bool LoadProgram(std::string filename);
@@ -20,10 +20,18 @@ private:
     char Pop();
 
 private:
-    static const int MAX_STACK = 1024;
-    int m_StackPointer=-1;
-    char* m_Stack;
+    //Static Sizes
+    static const int MAX_RAM = 536870912; //500 MB
+    unsigned int m_StackSize = 1024;
+    unsigned int m_NumInstructions = 0;
+    unsigned int m_HeapBase = 0;
 
-    std::vector<char> m_Bytecode;
+    //RAM
+    char* m_RAM;
+
+    //Registers
+    unsigned int m_ProgramCounter = 0;
+    int m_StackPointer = -1;
+
     bool ProgramLoaded = false;
 };
