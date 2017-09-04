@@ -92,12 +92,36 @@ void VirtualMachine::Interpret()
             }
             continue;
 
+            //put memory at address on stack
+            case Opcode::PUSH:
+            {
+                Push(m_RAM[Pop()]);
+            }
+            continue;
+
+            //store a in memory at b
+            case Opcode::POP:
+            {
+                char address = Pop();
+                m_RAM[address] = Pop();
+            }
+            continue;
+
             //Add values together
             case Opcode::ADD:
             {
                 char b = Pop();
                 char a = Pop();
                 Push(a + b);
+            }
+            continue;
+
+            //a - b
+            case Opcode::SUB:
+            {
+                char b = Pop();
+                char a = Pop();
+                Push(a - b);
             }
             continue;
 
