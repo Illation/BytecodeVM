@@ -19,6 +19,12 @@ private:
     void Push(char value);
     char Pop();
 
+    //Manipulate memory with 4 bytes
+    template<typename T>
+    T Unpack(unsigned int address);
+    template<typename T>
+    void Pack(unsigned int address, T value);
+
 private:
     //Static Sizes
     static const int MAX_RAM = 536870912; //500 MB

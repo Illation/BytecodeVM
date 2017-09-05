@@ -151,3 +151,36 @@ char VirtualMachine::Pop()
     assert(m_StackPointer >= 0); 
     return m_RAM[m_StackPointer--];
 }
+
+template<typename T>
+T VirtualMachine::Unpack(unsigned int address)
+{
+#ifdef BIG_ENDIAN
+    unsigned int value =    static_cast<unsigned char>(m_RAM[address+3]) << 24 |
+                            static_cast<unsigned char>(m_RAM[address+2]) << 16 |
+                            static_cast<unsigned char>(m_RAM[address+1]) << 8 |
+                            static_cast<unsigned char>(m_RAM[address+0]);
+#elif
+    unsigned int value =    static_cast<unsigned char>(m_RAM[address+0]) << 24 |
+                            static_cast<unsigned char>(m_RAM[address+1]) << 16 |
+                            static_cast<unsigned char>(m_RAM[address+2]) << 8 |
+                            static_cast<unsigned char>(m_RAM[address+3]);
+#endif
+    return static_cast<T>(value);
+}
+template<typename T>
+void VirtualMachine::Pack(unsigned int address, T value)
+{
+   unsigned int n = static_cast<unsigned int>(value);
+#ifdef BIG_ENDIAN
+   m_RAM[address+3] = (n >> 24) & 0xFF;
+   m_RAM[address+2] = (n >> 16) & 0xFF;
+   m_RAM[address+1] = (n >> 8) & 0xFF;
+   m_RAM[address+0] = n & 0xFF;
+#elif
+   m_RAM[address+0] = (n >> 24) & 0xFF;
+   m_RAM[address+1] = (n >> 16) & 0xFF;
+   m_RAM[address+2] = (n >> 8) & 0xFF;
+   m_RAM[address+3] = n & 0xFF;
+#endif
+}

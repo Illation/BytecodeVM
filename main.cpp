@@ -5,6 +5,9 @@
 #include "AssemblyCompiler.h"
 #include "Opcode.h"
 
+#undef BIG_ENDIAN
+#define LITTLE_ENDIAN
+
 static const std::string AssemblyExtension(".bca");
 static const std::string ExecutableExtension(".bce");
 
