@@ -88,6 +88,76 @@ bool AssemblyCompiler::Compile()
 
 bool AssemblyCompiler::BuildSymbolTable()
 {
+    unsigned int numInstr = 0;
+
+    for(unsigned int line = 0; line < m_Lines.size(); ++line)
+    {
+        std::string opname;
+        std::string arguments;
+        if(!TokenizeLine(m_Lines[line], opname, arguments))continue;
+        if(!IsValidOpname(opname, line))return false;
+        Opcode code = OpcodeNames[opname];
+
+        switch(code)
+        {
+        case Opcode::LITERAL:
+            {
+                numInstr += 5; 
+                if(!HasValidArgs(arguments, line, opname))return false;
+                CheckVar(arguments);
+            }
+            break;
+
+        case Opcode::LITERAL_ARRAY:
+            {
+                if(!HasValidArgs(arguments, line, opname))return false;
+
+                if(arguments[0] == '\"')
+                {
+                    if(arguments.size()==1)
+                    {
+                        std::cerr << "[ASM CMP] " << line << ", " << opname << ": Incorrect argument size!" << std::endl;
+                        PrintAbort(line);
+                        return false;
+                    }
+                    int j = 1;
+                    while(arguments[j] != '\"')
+                    {
+                        numInstr+=4;
+                        ++j;
+                    }
+                }
+                else
+                {
+                    while(arguments.size() > 0)
+                    {
+                        numInstr+=4;
+                        CheckVar(arguments);
+                    }
+                }
+                numInstr+=5;
+            }
+            break;
+
+        default:
+            numInstr++;
+            break;
+        }
+    }
+
+    //Static memory allocation
+    std::cout << "[ASM CMP] Instruction count: " << numInstr << "; Symbols: " << std::endl;
+    unsigned int freeAddress = m_StackSize + numInstr;
+    for(unsigned int i = 0; i < SymbolTable.size(); ++i)
+    {
+        if(SymbolTable[i].name[0] == '#')
+        {
+            SymbolTable[i].value = freeAddress;
+            freeAddress += 4;
+        }
+        std::cout << "[ASM CMP] name: " << SymbolTable[i].name << "; value: " << SymbolTable[i].value << std::endl;
+    }
+
     return true;
 }
 
@@ -95,115 +165,85 @@ bool AssemblyCompiler::CompileInstructions()
 {
     for(unsigned int line = 0; line < m_Lines.size(); ++line)
     {
-        //Get tokens for line
         std::string opname;
         std::string arguments;
-        std::size_t firstSpace = m_Lines[line].find(' ');
-        if(firstSpace!=std::string::npos)
-        {
-            opname = m_Lines[line].substr(0, firstSpace);
-            if(firstSpace < m_Lines[line].size()-1)
-                arguments = m_Lines[line].substr(firstSpace+1);
-        }
-        else opname = m_Lines[line];
+        if(!TokenizeLine(m_Lines[line], opname, arguments))continue;
+        if(!IsValidOpname(opname, line))return false;
+        Opcode code = OpcodeNames[opname];
 
-        if(opname.size() > 0)
+        switch(code)
         {
-            if(OpcodeNames.count(opname))
+        case Opcode::LITERAL:
             {
-                Opcode code = OpcodeNames[opname];
-                switch(code)
+                if(!HasValidArgs(arguments, line, opname))return false;
+                int parsed;
+                if(ParseLiteral(parsed, arguments))
                 {
-                    case Opcode::LITERAL:
-                        {
-                            if(arguments.size()==0)
-                            {
-                                std::cerr << "[ASM CMP] " << line << ", " << opname << ": Incorrect amount of arguments!" << std::endl;
-                                PrintAbort(line);
-                                return false;
-                            }
-                            int parsed;
-                            if(ParseLiteral(parsed, arguments))
-                            {
-                                m_Bytecode.push_back(static_cast<char>(code));
-                                WriteInt(parsed);
-                            }
-                            else
-                            {
-                                PrintAbort(line);
-                                return false;
-                            } 
-                        }
-                        break;
-
-                    case Opcode::LITERAL_ARRAY:
-                        {
-                            if(arguments.size()==0)
-                            {
-                                std::cerr << "[ASM CMP] " << line << ", " << opname << ": Incorrect amount of arguments!" << std::endl;
-                                PrintAbort(line);
-                                return false;
-                            }
-                            m_Bytecode.push_back(static_cast<char>(code));
-
-                            std::vector<int> arr;
-                            if(arguments[0] == '\"')
-                            {
-                                if(arguments.size()==1)
-                                {
-                                    std::cerr << "[ASM CMP] " << line << ", " << opname << ": Incorrect argument size!" << std::endl;
-                                    PrintAbort(line);
-                                    return false;
-                                }
-                                int j = 1;
-                                while(arguments[j] != '\"')
-                                {
-                                    if(j >= arguments.size())
-                                    {
-                                        std::cerr << "[ASM CMP] " << line << ", " << opname << ": Expected ' \" ' !" << std::endl;
-                                        PrintAbort(line);
-                                        return false;
-                                    }
-                                    arr.push_back(int(arguments[j]));
-
-                                    ++j;
-                                }
-                            }
-                            else
-                            {
-                                while(arguments.size() > 0)
-                                {
-                                    int parsed;
-                                    if(ParseLiteral(parsed, arguments))
-                                    {
-                                        WriteInt(parsed);
-                                        arr.push_back(parsed);
-                                    }
-                                    else
-                                    {
-                                        PrintAbort(line);
-                                        return false;
-                                    } 
-                                }
-                            }
-                            WriteInt(arr.size());
-                            for(auto value : arr) WriteInt(value);
-                        }
-                        break;
-
-                    default:
-                        m_Bytecode.push_back(static_cast<char>(code));
-                        break;
+                    m_Bytecode.push_back(static_cast<char>(code));
+                    WriteInt(parsed);
                 }
+                else
+                {
+                    PrintAbort(line);
+                    return false;
+                } 
             }
-            else
+            break;
+
+        case Opcode::LITERAL_ARRAY:
             {
-                std::cerr << "[ASM CMP] " << line << ": Invalid Opcode '" << opname << "'!" << std::endl;
-                PrintAbort(line);
-                return false;
+                if(!HasValidArgs(arguments, line, opname))return false;
+                m_Bytecode.push_back(static_cast<char>(code));
+
+                std::vector<int> arr;
+                if(arguments[0] == '\"')
+                {
+                    if(arguments.size()==1)
+                    {
+                        std::cerr << "[ASM CMP] " << line << ", " << opname << ": Incorrect argument size!" << std::endl;
+                        PrintAbort(line);
+                        return false;
+                    }
+                    int j = 1;
+                    while(arguments[j] != '\"')
+                    {
+                        if(j >= arguments.size())
+                        {
+                            std::cerr << "[ASM CMP] " << line << ", " << opname << ": Expected ' \" ' !" << std::endl;
+                            PrintAbort(line);
+                            return false;
+                        }
+                        arr.push_back(int(arguments[j]));
+
+                        ++j;
+                    }
+                }
+                else
+                {
+                    while(arguments.size() > 0)
+                    {
+                        int parsed;
+                        if(ParseLiteral(parsed, arguments))
+                        {
+                            WriteInt(parsed);
+                            arr.push_back(parsed);
+                        }
+                        else
+                        {
+                            PrintAbort(line);
+                            return false;
+                        } 
+                    }
+                }
+                WriteInt(arr.size());
+                for(auto value : arr) WriteInt(value);
             }
+            break;
+
+        default:
+            m_Bytecode.push_back(static_cast<char>(code));
+            break;
         }
-        else continue;
     }
     return true;
 }
@@ -254,6 +294,79 @@ std::vector<char> AssemblyCompiler::GetBytecode()
 
 
 //Parsing helpers
+bool AssemblyCompiler::TokenizeLine(std::string line, std::string &opname, std::string &arguments)
+{
+    //Comment
+    if(line.size() > 1 && line[0] == '/' && line[1] == '/')
+        return false;
+    //Empty Line
+    if(line.size() == 0)
+        return false;
+    //get op and arguments
+    std::size_t firstSpace = line.find(' ');
+    if(firstSpace!=std::string::npos)
+    {
+        opname = line.substr(0, firstSpace);
+        if(firstSpace < line.size()-1)
+            arguments = line.substr(firstSpace+1);
+    }
+    else opname = line;
+
+    return true;
+}
+bool AssemblyCompiler::IsValidOpname(std::string opname, unsigned int line)
+{
+    if(!(OpcodeNames.count(opname)))
+    {
+        std::cerr << "[ASM CMP] " << line << ": Invalid Opcode '" << opname << "'!" << std::endl;
+        PrintAbort(line);
+        return false;
+    }
+    return true;
+}
+
+void AssemblyCompiler::CheckVar(std::string &arguments)
+{
+    //Separate first argument out
+    std::string arg;
+    std::size_t nDelim = arguments.find(' ', 1);
+    if(nDelim = std::string::npos)
+    {
+        arg = arguments;
+        arguments = std::string();
+    }
+    else
+    {
+        arg = arguments.substr(0, nDelim-1);
+        arguments = arguments.substr(nDelim+1);
+    }
+    //Handle found variable
+    if(arg[0]=='#')
+    {
+        bool newVar = true;
+        for(auto sbl : SymbolTable)
+        {
+            if(sbl.name == arg) newVar = false;
+        }
+        if(newVar)
+        {
+            auto sbl = AssemblyCompiler::Symbol();
+            sbl.name = arg;
+            SymbolTable.push_back(sbl);
+        }
+    }
+}
+
+bool AssemblyCompiler::HasValidArgs(std::string arguments, unsigned int line, std::string opname)
+{
+    if(arguments.size()==0)
+    {
+        std::cerr <<"[ASM CMP] " << line << ", " << opname << ": Incorrect amount of arguments!" << std::endl;
+        PrintAbort(line);
+        return false;
+    }
+    return true;
+}
 bool isNumber(const std::string& s)
 {
     std::string::const_iterator it = s.begin();
@@ -262,7 +375,31 @@ bool isNumber(const std::string& s)
 }
 bool AssemblyCompiler::ParseLiteral(int &out, std::string &arguments)
 {
-    if(arguments[0]=='\'')
+    if(arguments[0]=='#') //Replace mnemonics (variables, lables)
+    {
+        std::string arg;
+        std::size_t nDelim = arguments.find(' ', 1);
+        if(nDelim = std::string::npos)
+        {
+            arg = arguments;
+            arguments = std::string();
+        }
+        else
+        {
+            arg = stoi(arguments.substr(0, nDelim-1));
+            arguments = arguments.substr(nDelim+1);
+        }
+        for(auto sbl : SymbolTable)
+        {
+            if(sbl.name == arg) 
+            {
+                out = int(sbl.value);
+                return true;
+            }
+        }
+        std::cerr << "[ASM CMP] Couldn't find symbol: " << arg << std::endl;
+    }
+    else if(arguments[0]=='\'') //char
     {
         out = int(arguments[1]);
         std::size_t nDelim = arguments.find('\'', 1);
@@ -273,7 +410,7 @@ bool AssemblyCompiler::ParseLiteral(int &out, std::string &arguments)
         else arguments = arguments.substr(nDelim+1);
         return true;
     }
-    else if(isNumber(arguments))
+    else if(isNumber(arguments)) //int
     {
         std::size_t nDelim = arguments.find(' ', 1);
         if(nDelim = std::string::npos)

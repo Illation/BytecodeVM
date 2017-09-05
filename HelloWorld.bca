@@ -4,8 +4,8 @@ LITERAL 12
 PRINT
 PRINT_ENDL
 
-//var a = 5
-LITERAL 5
+//var a = 6
+LITERAL 6
 LITERAL #a
 POP
 

@@ -153,7 +153,7 @@ void VirtualMachine::Interpret()
                 {
                     out = static_cast<char>(Pop()) + out;
                 }
-                std::cout << out << std::endl;
+                std::cout << out;
                 ++m_ProgramCounter;
             }
             continue;
@@ -161,7 +161,15 @@ void VirtualMachine::Interpret()
             //print one integer to console
             case Opcode::PRINT_INT:
             {
-                std::cout << Pop() << std::endl;
+                std::cout << Pop();
+                ++m_ProgramCounter;
+            }
+            continue;
+            
+            //print one integer to console
+            case Opcode::PRINT_ENDL:
+            {
+                std::cout << std::endl;
                 ++m_ProgramCounter;
             }
             continue;

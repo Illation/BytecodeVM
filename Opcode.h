@@ -12,7 +12,8 @@ enum class Opcode : char
     ADD,
     SUB,
     PRINT,
-    PRINT_INT
+    PRINT_INT,
+    PRINT_ENDL
 };
 static std::map<std::string, Opcode> OpcodeNames
 {
@@ -23,5 +24,6 @@ static std::map<std::string, Opcode> OpcodeNames
     {"ADD", Opcode::ADD},
     {"SUB", Opcode::SUB},
     {"PRINT", Opcode::PRINT},
-    {"PRINT_INT", Opcode::PRINT_INT}
+    {"PRINT_INT", Opcode::PRINT_INT},
+    {"PRINT_ENDL", Opcode::PRINT_ENDL}
 };

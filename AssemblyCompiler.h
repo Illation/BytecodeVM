@@ -32,6 +32,12 @@ private:
     bool CompileInstructions();
     bool CompileHeader();
 
+    bool TokenizeLine(std::string line, std::string &opname, std::string &arguments);
+    bool IsValidOpname(std::string opname, unsigned int line);
+
+    void CheckVar(std::string &arguments);
+
+    bool HasValidArgs(std::string arguments, unsigned int line, std::string opname);
     bool ParseLiteral(int &out, std::string &arguments);
     void WriteInt(int value);
     void WriteInt(int value, std::vector<char> &target);
@@ -43,6 +49,13 @@ private:
 
     std::vector<std::string> m_Lines;
     std::vector<char> m_Bytecode;
+
+    struct Symbol
+    {
+        std::string name;
+        unsigned int value = 0;
+    };
+    std::vector<AssemblyCompiler::Symbol> SymbolTable;
 
     unsigned int m_HeaderSize = 0;
     unsigned int m_StackSize = 1048576;
