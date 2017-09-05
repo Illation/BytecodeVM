@@ -6,7 +6,7 @@
 class VirtualMachine
 {
 public:
-    VirtualMachine(unsigned int stackSize = 1024);
+    VirtualMachine(unsigned int stackSize = 1048576);
     ~VirtualMachine();
 
     bool LoadProgram(std::string filename);
@@ -16,8 +16,8 @@ public:
 
 private:
     //Stack Manipulation
-    void Push(char value);
-    char Pop();
+    void Push(int value);
+    int Pop();
 
     //Manipulate memory with 4 bytes
     template<typename T>
@@ -37,7 +37,7 @@ private:
 
     //Registers
     unsigned int m_ProgramCounter = 0;
-    int m_StackPointer = -1;
+    int m_StackPointer = -4;
 
     bool ProgramLoaded = false;
 };

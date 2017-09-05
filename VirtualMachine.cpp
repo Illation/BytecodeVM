@@ -67,7 +67,8 @@ void VirtualMachine::Interpret()
         return;
     }
 
-    for(m_ProgramCounter = m_StackSize; m_ProgramCounter < m_HeapBase; ++m_ProgramCounter)
+    m_ProgramCounter = m_StackSize;
+    while( m_ProgramCounter < m_HeapBase)
     {
         Opcode operation = static_cast<Opcode>(m_RAM[m_ProgramCounter]);
         switch(operation)
@@ -75,18 +76,20 @@ void VirtualMachine::Interpret()
             //Add a byte to the stack
             case Opcode::LITERAL:
             {
-                char value = m_RAM[++m_ProgramCounter];
-                Push(value);
+                Push(Unpack<int>(++m_ProgramCounter));
+                m_ProgramCounter+=sizeof(int);//need to increment pc additionally as an int occupies multiple instructions
             }
             continue;
 
             //Add multiple bytes to the stack
             case Opcode::LITERAL_ARRAY:
             {
-                char numValues = m_RAM[++m_ProgramCounter];
+                int numValues = Unpack<int>(++m_ProgramCounter);
+                m_ProgramCounter+=sizeof(int);
                 while(numValues > 0)
                 {
-                    Push(m_RAM[++m_ProgramCounter]);
+                    Push(Unpack<int>(m_ProgramCounter));
+                    m_ProgramCounter+=sizeof(int);
                     --numValues;
                 }
             }
@@ -95,33 +98,37 @@ void VirtualMachine::Interpret()
             //put memory at address on stack
             case Opcode::PUSH:
             {
-                Push(m_RAM[Pop()]);
+                Push(Unpack<int>(Pop()));
+                ++m_ProgramCounter;
             }
             continue;
 
             //store a in memory at b
             case Opcode::POP:
             {
-                char address = Pop();
-                m_RAM[address] = Pop();
+                int address = Pop();
+                Pack<int>(address, Pop());
+                ++m_ProgramCounter;
             }
             continue;
 
             //Add values together
             case Opcode::ADD:
             {
-                char b = Pop();
-                char a = Pop();
+                int b = Pop();
+                int a = Pop();
                 Push(a + b);
+                ++m_ProgramCounter;
             }
             continue;
 
             //a - b
             case Opcode::SUB:
             {
-                char b = Pop();
-                char a = Pop();
+                int b = Pop();
+                int a = Pop();
                 Push(a - b);
+                ++m_ProgramCounter;
             }
             continue;
 
@@ -132,24 +139,35 @@ void VirtualMachine::Interpret()
                 std::string out;
                 for(int j = 0; j<size; ++j)
                 {
-                    out = Pop() + out;
+                    out = static_cast<char>(Pop()) + out;
                 }
                 std::cout << out << std::endl;
+                ++m_ProgramCounter;
+            }
+            continue;
+            
+            //print one integer to console
+            case Opcode::PRINT_INT:
+            {
+                std::cout << Pop() << std::endl;
+                ++m_ProgramCounter;
             }
             continue;
         }
     }
 }
 
-void VirtualMachine::Push(char value)
+void VirtualMachine::Push(int value)
 {
-    assert(m_StackPointer + 1 < m_StackSize); 
-    m_RAM[++m_StackPointer] = value;
+    assert(m_StackPointer + sizeof(int) < (int)m_StackSize); 
+    Pack<int>(m_StackPointer+=sizeof(int), value);
 }
-char VirtualMachine::Pop()
+int VirtualMachine::Pop()
 {
     assert(m_StackPointer >= 0); 
-    return m_RAM[m_StackPointer--];
+    int value = Unpack<int>(m_StackPointer);
+    m_StackPointer -= sizeof(int);
+    return value;
 }
 
 template<typename T>

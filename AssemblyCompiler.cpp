@@ -106,11 +106,11 @@ bool AssemblyCompiler::Compile()
                                 PrintAbort(line);
                                 return false;
                             }
-                            char parsed;
-                            if(ParseChar(parsed, arguments))
+                            int parsed;
+                            if(ParseLiteral(parsed, arguments))
                             {
                                 m_Bytecode.push_back(static_cast<char>(code));
-                                m_Bytecode.push_back(parsed);
+                                WriteInt(parsed);
                             }
                             else
                             {
@@ -130,7 +130,7 @@ bool AssemblyCompiler::Compile()
                             }
                             m_Bytecode.push_back(static_cast<char>(code));
 
-                            std::vector<char> arr;
+                            std::vector<int> arr;
                             if(arguments[0] == '\"')
                             {
                                 if(arguments.size()==1)
@@ -148,7 +148,7 @@ bool AssemblyCompiler::Compile()
                                         PrintAbort(line);
                                         return false;
                                     }
-                                    arr.push_back(arguments[j]);
+                                    arr.push_back(int(arguments[j]));
 
                                     ++j;
                                 }
@@ -157,9 +157,10 @@ bool AssemblyCompiler::Compile()
                             {
                                 while(arguments.size() > 0)
                                 {
-                                    char parsed;
-                                    if(ParseChar(parsed, arguments))
+                                    int parsed;
+                                    if(ParseLiteral(parsed, arguments))
                                     {
+                                        WriteInt(parsed);
                                         arr.push_back(parsed);
                                     }
                                     else
@@ -169,8 +170,8 @@ bool AssemblyCompiler::Compile()
                                     } 
                                 }
                             }
-                            m_Bytecode.push_back(arr.size());
-                            m_Bytecode.insert(m_Bytecode.end(), arr.begin(), arr.end());
+                            WriteInt(arr.size());
+                            for(auto value : arr) WriteInt(value);
                         }
                         break;
 
@@ -236,11 +237,11 @@ bool isNumber(const std::string& s)
     while (it != s.end() && std::isdigit(*it)) ++it;
     return !s.empty() && it == s.end();
 }
-bool AssemblyCompiler::ParseChar(char &out, std::string &arguments)
+bool AssemblyCompiler::ParseLiteral(int &out, std::string &arguments)
 {
     if(arguments[0]=='\'')
     {
-        out = arguments[1];
+        out = int(arguments[1]);
         std::size_t nDelim = arguments.find('\'', 1);
         if(nDelim = std::string::npos)
         {
@@ -254,12 +255,12 @@ bool AssemblyCompiler::ParseChar(char &out, std::string &arguments)
         std::size_t nDelim = arguments.find(' ', 1);
         if(nDelim = std::string::npos)
         {
-            out = (char)stoi(arguments);
+            out = stoi(arguments);
             arguments = std::string();
         }
         else
         {
-            out = (char)stoi(arguments.substr(0, nDelim-1));
+            out = stoi(arguments.substr(0, nDelim-1));
             arguments = arguments.substr(nDelim+1);
         }
         return true;

@@ -28,7 +28,7 @@ public:
     std::vector<char> GetBytecode();
 
 private:
-    bool ParseChar(char &out, std::string &arguments);
+    bool ParseLiteral(int &out, std::string &arguments);
     void WriteInt(int value);
 
     void PrintAbort(unsigned int line);
