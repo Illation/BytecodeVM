@@ -28,8 +28,13 @@ public:
     std::vector<char> GetBytecode();
 
 private:
+    bool BuildSymbolTable();
+    bool CompileInstructions();
+    bool CompileHeader();
+
     bool ParseLiteral(int &out, std::string &arguments);
     void WriteInt(int value);
+    void WriteInt(int value, std::vector<char> &target);
 
     void PrintAbort(unsigned int line);
 
@@ -38,4 +43,7 @@ private:
 
     std::vector<std::string> m_Lines;
     std::vector<char> m_Bytecode;
+
+    unsigned int m_HeaderSize = 0;
+    unsigned int m_StackSize = 1048576;
 };

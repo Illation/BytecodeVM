@@ -50,11 +50,23 @@ bool VirtualMachine::LoadProgram(std::string filename)
 }
 void VirtualMachine::SetProgram(std::vector<char> bytecode)
 {
-    m_NumInstructions = bytecode.size();
+#ifdef BIG_ENDIAN
+    m_StackSize =   static_cast<unsigned char>(bytecode[3]) << 24 |
+                    static_cast<unsigned char>(bytecode[2]) << 16 |
+                    static_cast<unsigned char>(bytecode[1]) << 8 |
+                    static_cast<unsigned char>(bytecode[0]);
+#elif
+    m_StackSize =   static_cast<unsigned char>(bytecode[0]) << 24 |
+                    static_cast<unsigned char>(bytecode[1]) << 16 |
+                    static_cast<unsigned char>(bytecode[2]) << 8 |
+                    static_cast<unsigned char>(bytecode[3]);
+#endif
+
+    m_NumInstructions = bytecode.size()-sizeof(int);
     m_HeapBase = m_NumInstructions + m_StackSize;
     for(int i = 0; i < m_NumInstructions; ++i)
     {
-        m_RAM[i+m_StackSize] = bytecode[i];
+        m_RAM[i+m_StackSize] = bytecode[i+sizeof(int)];
     } 
     ProgramLoaded = true;
 }
@@ -152,6 +164,11 @@ void VirtualMachine::Interpret()
                 std::cout << Pop() << std::endl;
                 ++m_ProgramCounter;
             }
+            continue;
+
+            default:
+            std::cerr << "Invalid opcode: " << int(static_cast<char>(operation)) << std::endl;
+            assert(false);
             continue;
         }
     }

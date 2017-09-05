@@ -77,6 +77,22 @@ bool AssemblyCompiler::Compile()
     }
 
     //Do compilation
+    if(!CompileHeader())return false;
+    if(!BuildSymbolTable())return false;
+    if(!CompileInstructions())return false;
+
+    std::cout << "[ASM CMP] Compilation Complete, no errors detected!" << std::endl;
+    m_State = CompState::COMPILED;
+    return true;
+}
+
+bool AssemblyCompiler::BuildSymbolTable()
+{
+    return true;
+}
+
+bool AssemblyCompiler::CompileInstructions()
+{
     for(unsigned int line = 0; line < m_Lines.size(); ++line)
     {
         //Get tokens for line
@@ -189,9 +205,16 @@ bool AssemblyCompiler::Compile()
         }
         else continue;
     }
+    return true;
+}
 
-    std::cout << "[ASM CMP] Compilation Complete, no errors detected!" << std::endl;
-    m_State = CompState::COMPILED;
+bool AssemblyCompiler::CompileHeader()
+{
+    std::vector<char> header;
+    WriteInt(m_StackSize, header);
+
+    m_HeaderSize = header.size();
+    m_Bytecode.insert(m_Bytecode.end(), header.begin(), header.end());
     return true;
 }
 
@@ -269,16 +292,20 @@ bool AssemblyCompiler::ParseLiteral(int &out, std::string &arguments)
 }
 void AssemblyCompiler::WriteInt(int value)
 {
+    WriteInt(value, m_Bytecode);
+}
+void AssemblyCompiler::WriteInt(int value, std::vector<char> &target)
+{
 #ifdef BIG_ENDIAN
-   m_Bytecode.push_back(value & 0xFF);
-   m_Bytecode.push_back((value >> 8) & 0xFF);
-   m_Bytecode.push_back((value >> 16) & 0xFF);
-   m_Bytecode.push_back((value >> 24) & 0xFF);
+   target.push_back(value & 0xFF);
+   target.push_back((value >> 8) & 0xFF);
+   target.push_back((value >> 16) & 0xFF);
+   target.push_back((value >> 24) & 0xFF);
 #elif
-   m_Bytecode.push_back((value >> 24) & 0xFF);
-   m_Bytecode.push_back((value >> 16) & 0xFF);
-   m_Bytecode.push_back((value >> 8) & 0xFF);
-   m_Bytecode.push_back(value & 0xFF);
+   target.push_back((value >> 24) & 0xFF);
+   target.push_back((value >> 16) & 0xFF);
+   target.push_back((value >> 8) & 0xFF);
+   target.push_back(value & 0xFF);
 #endif
 }
 

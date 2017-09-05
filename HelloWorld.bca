@@ -1,10 +1,38 @@
+//<<("Hello World!") <<endl
 LITERAL_ARRAY "Hello World!"
 LITERAL 12
 PRINT
-LITERAL_ARRAY "5 + 11 ="
-LITERAL 8
-PRINT
+PRINT_ENDL
+
+//var a = 5
 LITERAL 5
+LITERAL #a
+POP
+
+//var b = 11
 LITERAL 11
+LITERAL #b
+POP
+
+//<<(a) <<(" + ") <<(b) <<(" = ")
+LITERAL #a
+PUSH
+PRINT_INT
+LITERAL_ARRAY " + "
+LITERAL 3
+PRINT
+LITERAL #b
+PUSH
+PRINT_INT
+LITERAL_ARRAY " = "
+LITERAL 3
+PRINT
+
+//<<(a+b) <<endl
+LITERAL #a
+PUSH
+LITERAL #b
+PUSH
 ADD
 PRINT_INT
+PRINT_ENDL
