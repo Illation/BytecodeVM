@@ -29,6 +29,8 @@ public:
 
 private:
     bool ParseChar(char &out, std::string &arguments);
+    void WriteInt(int value);
+
     void PrintAbort(unsigned int line);
 
 private:

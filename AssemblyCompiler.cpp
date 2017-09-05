@@ -266,6 +266,21 @@ bool AssemblyCompiler::ParseChar(char &out, std::string &arguments)
     }
     return false;
 }
+void AssemblyCompiler::WriteInt(int value)
+{
+#ifdef BIG_ENDIAN
+   m_Bytecode.push_back(value & 0xFF);
+   m_Bytecode.push_back((value >> 8) & 0xFF);
+   m_Bytecode.push_back((value >> 16) & 0xFF);
+   m_Bytecode.push_back((value >> 24) & 0xFF);
+#elif
+   m_Bytecode.push_back((value >> 24) & 0xFF);
+   m_Bytecode.push_back((value >> 16) & 0xFF);
+   m_Bytecode.push_back((value >> 8) & 0xFF);
+   m_Bytecode.push_back(value & 0xFF);
+#endif
+}
+
 void AssemblyCompiler::PrintAbort(unsigned int line)
 {
     std::cerr << m_Lines[line] << std::endl;
