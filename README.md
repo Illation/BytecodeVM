@@ -40,3 +40,5 @@ I plan to add:
  * indexed library function support (executes function at pushed index)
  * Subroutines
  * Dynamic memory allocation
+ * Support for standard types int float char bool (maybe short, long, double etc) unsigned or signed
+ * Built in support for variable length arrays, strings and vectors
