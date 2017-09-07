@@ -7,32 +7,71 @@ PRINT_ENDL
 //var a = 6
 LITERAL 6
 LITERAL #a
-POP
+STORE
 
 //var b = 11
 LITERAL 11
 LITERAL #b
-POP
+STORE
 
-//<<(a) <<(" + ") <<(b) <<(" = ")
+//<<(a) <<(" * ") <<(b) <<(" = ")
 LITERAL #a
-PUSH
+LOAD
 PRINT_INT
-LITERAL_ARRAY " + "
+LITERAL_ARRAY " * "
 LITERAL 3
 PRINT
 LITERAL #b
-PUSH
+LOAD
 PRINT_INT
 LITERAL_ARRAY " = "
 LITERAL 3
 PRINT
 
-//<<(a+b) <<endl
-LITERAL #a
-PUSH
+//var acc = 0
+LITERAL 0
+LITERAL #acc
+STORE
+
+//for(var i = 0; i < b; ++i)
+//    acc += a
+
+LITERAL 0
+LITERAL #i
+STORE
+
+@loop
+
+LITERAL #i
+LOAD
 LITERAL #b
-PUSH
+LOAD
+LESS
+NOT
+LITERAL @loop_end
+JMP_IF
+
+LITERAL #acc
+LOAD
+LITERAL #a
+LOAD
 ADD
+LITERAL #acc
+STORE
+
+LITERAL #i
+LOAD
+LITERAL 1
+ADD
+LITERAL #i
+STORE
+LITERAL @loop
+JMP
+
+@loop_end
+
+//<<(acc) <<endl
+LITERAL #acc
+LOAD
 PRINT_INT
 PRINT_ENDL

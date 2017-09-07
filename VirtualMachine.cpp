@@ -82,14 +82,17 @@ void VirtualMachine::Interpret()
     m_ProgramCounter = m_StackSize;
     while( m_ProgramCounter < m_HeapBase)
     {
+        assert(m_ProgramCounter - m_StackSize < m_NumInstructions);
+
         Opcode operation = static_cast<Opcode>(m_RAM[m_ProgramCounter]);
+
         switch(operation)
         {
             //Add a byte to the stack
             case Opcode::LITERAL:
             {
                 Push(Unpack<int>(++m_ProgramCounter));
-                m_ProgramCounter+=sizeof(int);//need to increment pc additionally as an int occupies multiple instructions
+                m_ProgramCounter+=sizeof(int);
             }
             continue;
 
@@ -107,16 +110,16 @@ void VirtualMachine::Interpret()
             }
             continue;
 
+            //MEMORY OPERATIONS
             //put memory at address on stack
-            case Opcode::PUSH:
+            case Opcode::LOAD:
             {
                 Push(Unpack<int>(Pop()));
                 ++m_ProgramCounter;
             }
             continue;
-
             //store a in memory at b
-            case Opcode::POP:
+            case Opcode::STORE:
             {
                 int address = Pop();
                 Pack<int>(address, Pop());
@@ -124,6 +127,7 @@ void VirtualMachine::Interpret()
             }
             continue;
 
+            //ARITHMETIC OPERATIONS
             //Add values together
             case Opcode::ADD:
             {
@@ -133,7 +137,6 @@ void VirtualMachine::Interpret()
                 ++m_ProgramCounter;
             }
             continue;
-
             //a - b
             case Opcode::SUB:
             {
@@ -144,6 +147,68 @@ void VirtualMachine::Interpret()
             }
             continue;
 
+            //LOGICAL OPERATIONS
+            //a < b
+            case Opcode::LESS:
+            {
+                int b = Pop();
+                int a = Pop();
+                Push(a < b);
+                ++m_ProgramCounter;
+            }
+            continue;
+            //a > b
+            case Opcode::GREATER:
+            {
+                int b = Pop();
+                int a = Pop();
+                Push(a > b);
+                ++m_ProgramCounter;
+            }
+            continue;
+            //!a
+            case Opcode::NOT:
+            {
+                int a = Pop();
+                Push(!a);
+                ++m_ProgramCounter;
+            }
+            continue;
+            //a == b
+            case Opcode::EQUALS:
+            {
+                int b = Pop();
+                int a = Pop();
+                Push(a == b);
+                ++m_ProgramCounter;
+            }
+            continue;
+
+            //FLOW CONTROL
+            //goto a
+            case Opcode::JMP:
+            {
+                int address = Pop();
+                m_ProgramCounter = address;
+            }
+            continue;
+            //if(a) goto b
+            case Opcode::JMP_IF:
+            {
+                int address = Pop();
+                int condition = Pop();
+                if(condition)
+                {
+                    m_ProgramCounter = address;
+                }
+                else
+                {
+                    ++m_ProgramCounter;
+                }
+            }
+            continue;
+
+            //"Library functions" should later be implemented differently
             //print x chars to console
             case Opcode::PRINT:
             {
@@ -157,7 +222,6 @@ void VirtualMachine::Interpret()
                 ++m_ProgramCounter;
             }
             continue;
-            
             //print one integer to console
             case Opcode::PRINT_INT:
             {
@@ -165,7 +229,6 @@ void VirtualMachine::Interpret()
                 ++m_ProgramCounter;
             }
             continue;
-            
             //print one integer to console
             case Opcode::PRINT_ENDL:
             {
@@ -174,6 +237,7 @@ void VirtualMachine::Interpret()
             }
             continue;
 
+            //INVALID
             default:
             std::cerr << "Invalid opcode: " << int(static_cast<char>(operation)) << std::endl;
             assert(false);

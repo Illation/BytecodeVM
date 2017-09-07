@@ -95,6 +95,26 @@ bool AssemblyCompiler::BuildSymbolTable()
         std::string opname;
         std::string arguments;
         if(!TokenizeLine(m_Lines[line], opname, arguments))continue;
+
+        if(opname[0] == '@')
+        {
+            bool newVar = true;
+            for(auto sbl : SymbolTable)
+            {
+                if(sbl.name == opname) newVar = false;
+            }
+            if(!newVar)
+            {
+                std::cerr << "[ASM CMP] " << line << ": label " << opname << " already defined!" << std::endl;
+                return false;
+            }
+            auto sbl = AssemblyCompiler::Symbol();
+            sbl.name = opname;
+            sbl.value = numInstr + m_StackSize;
+            SymbolTable.push_back(sbl);
+            continue;
+        }
+
         if(!IsValidOpname(opname, line))return false;
         Opcode code = OpcodeNames[opname];
 
@@ -168,7 +188,10 @@ bool AssemblyCompiler::CompileInstructions()
         std::string opname;
         std::string arguments;
         if(!TokenizeLine(m_Lines[line], opname, arguments))continue;
+        if(opname[0] == '@') continue;
+
         if(!IsValidOpname(opname, line))return false;
+
         Opcode code = OpcodeNames[opname];
 
         switch(code)
@@ -375,7 +398,7 @@ bool isNumber(const std::string& s)
 }
 bool AssemblyCompiler::ParseLiteral(int &out, std::string &arguments)
 {
-    if(arguments[0]=='#') //Replace mnemonics (variables, lables)
+    if((arguments[0]=='#') || (arguments[0]=='@')) //Replace mnemonics (variables, lables)
     {
         std::string arg;
         std::size_t nDelim = arguments.find(' ', 1);
