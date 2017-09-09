@@ -1,0 +1,89 @@
+//<<("Hello World!") <<endl
+LITERAL_ARRAY "Hello World!"
+LITERAL 12
+PRINT
+PRINT_ENDL
+
+//var a = 6
+LITERAL 6
+LITERAL #a
+STORE
+
+//var b = 11
+LITERAL 11
+LITERAL #b
+STORE
+
+//<<(a) <<(" * ") <<(b) <<(" = ") <<(loop_mult(a, b)) <<endl
+LITERAL #a
+LOAD
+PRINT_INT
+LITERAL_ARRAY " * "
+LITERAL 3
+PRINT
+LITERAL #b
+LOAD
+PRINT_INT
+LITERAL_ARRAY " = "
+LITERAL 3
+PRINT
+LITERAL #a
+LOAD
+LITERAL #b
+LOAD
+LITERAL $loop_mult
+CALL
+PRINT_INT
+PRINT_ENDL
+
+
+
+//var loop_mult(arg_a, arg_b)
+//  var acc = 0
+//  for(var i = 0; i < arg_b; ++i)
+//	  acc += arg_a
+//  return acc
+
+$loop_mult #arg_a #arg_b
+
+LITERAL 0
+LITERAL #acc
+STORE_LCL
+
+LITERAL 0
+LITERAL #i
+STORE_LCL
+
+@loop
+
+LITERAL #i
+LOAD_LCL
+LITERAL #arg_b
+LOAD_ARG
+LESS
+NOT
+LITERAL @loop_end
+JMP_IF
+
+LITERAL #acc
+LOAD_LCL
+LITERAL #arg_a
+LOAD_ARG
+ADD
+LITERAL #acc
+STORE_LCL
+
+LITERAL #i
+LOAD_LCL
+LITERAL 1
+ADD
+LITERAL #i
+STORE_LCL
+LITERAL @loop
+JMP
+
+@loop_end
+
+LITERAL #acc
+LOAD_LCL
+RETURN
