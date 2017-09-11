@@ -8,6 +8,7 @@
 #include <cctype>
 
 #include "Opcode.h"
+#include "SymbolTable.h"
 
 //Constructor Destructor
 AssemblyCompiler::AssemblyCompiler()
@@ -89,9 +90,12 @@ bool AssemblyCompiler::Compile()
 
 bool AssemblyCompiler::BuildSymbolTable()
 {
-    uint32 numInstr = 0;
+	if(!m_pSymbolTable)
+		m_pSymbolTable = new SymbolTable(m_StackSize);
+	else
+		std::cerr << "[ASM CMP] Symbol table already created!" << std::endl;
 
-    for(uint32 line = 0; line < m_Lines.size(); ++line)
+	for(uint32 line = 0; line < m_Lines.size(); ++line)
     {
         std::string opname;
         std::string arguments;
@@ -99,21 +103,12 @@ bool AssemblyCompiler::BuildSymbolTable()
 
         if(opname[0] == '@')
         {
-            bool newVar = true;
-            for(auto sbl : SymbolTable)
-            {
-                if(sbl.name == opname) newVar = false;
-            }
-            if(!newVar)
+            if(!m_pSymbolTable->AddLabel(opname))
             {
                 std::cerr << "[ASM CMP] " << line << ": label " << opname << " already defined!" << std::endl;
                 return false;
             }
-            auto sbl = AssemblyCompiler::Symbol();
-            sbl.name = opname;
-            sbl.value = numInstr + m_StackSize;
-            SymbolTable.push_back(sbl);
-            continue;
+			continue;
         }
 
         if(!IsValidOpname(opname, line))return false;
@@ -123,7 +118,7 @@ bool AssemblyCompiler::BuildSymbolTable()
         {
         case Opcode::LITERAL:
             {
-                numInstr += 5; 
+                m_pSymbolTable->m_NumInstructions += 5; 
                 if(!HasValidArgs(arguments, line, opname))return false;
                 CheckVar(arguments);
             }
@@ -144,7 +139,7 @@ bool AssemblyCompiler::BuildSymbolTable()
                     uint32 j = 1;
                     while(arguments[j] != '\"')
                     {
-                        numInstr+=4;
+                        m_pSymbolTable->m_NumInstructions+=4;
                         ++j;
                     }
                 }
@@ -152,32 +147,21 @@ bool AssemblyCompiler::BuildSymbolTable()
                 {
                     while(arguments.size() > 0)
                     {
-                        numInstr+=4;
+                        m_pSymbolTable->m_NumInstructions+=4;
                         CheckVar(arguments);
                     }
                 }
-                numInstr+=5;
+                m_pSymbolTable->m_NumInstructions+=5;
             }
             break;
 
         default:
-            numInstr++;
+            m_pSymbolTable->m_NumInstructions++;
             break;
         }
     }
 
-    //Static memory allocation
-    std::cout << "[ASM CMP] Instruction count: " << numInstr << "; Symbols: " << std::endl;
-    uint32 freeAddress = m_StackSize + numInstr;
-    for(uint32 i = 0; i < SymbolTable.size(); ++i)
-    {
-        if(SymbolTable[i].name[0] == '#')
-        {
-            SymbolTable[i].value = freeAddress;
-            freeAddress += 4;
-        }
-        std::cout << "[ASM CMP] name: " << SymbolTable[i].name << "; value: " << SymbolTable[i].value << std::endl;
-    }
+	m_pSymbolTable->AllocateStatic();
 
     return true;
 }
@@ -189,7 +173,7 @@ bool AssemblyCompiler::CompileInstructions()
         std::string opname;
         std::string arguments;
         if(!TokenizeLine(m_Lines[line], opname, arguments))continue;
-        if(opname[0] == '@') continue;
+        if(opname[0] == '@') continue; //Skip labels
 
         if(!IsValidOpname(opname, line))return false;
 
@@ -367,17 +351,7 @@ void AssemblyCompiler::CheckVar(std::string &arguments)
     //Handle found variable
     if(arg[0]=='#')
     {
-        bool newVar = true;
-        for(auto sbl : SymbolTable)
-        {
-            if(sbl.name == arg) newVar = false;
-        }
-        if(newVar)
-        {
-            auto sbl = AssemblyCompiler::Symbol();
-            sbl.name = arg;
-            SymbolTable.push_back(sbl);
-        }
+		m_pSymbolTable->AddVariable(arg);
     }
 }
 
@@ -413,14 +387,11 @@ bool AssemblyCompiler::ParseLiteral(int32 &out, std::string &arguments)
             arg = stoi(arguments.substr(0, nDelim-1));
             arguments = arguments.substr(nDelim+1);
         }
-        for(auto sbl : SymbolTable)
-        {
-            if(sbl.name == arg) 
-            {
-                out = int32(sbl.value);
-                return true;
-            }
-        }
+		if(m_pSymbolTable->HasSymbol(arg)) 
+		{
+			out = static_cast<int32>(m_pSymbolTable->GetValue(arg));
+			return true;
+		}
         std::cerr << "[ASM CMP] Couldn't find symbol: " << arg << std::endl;
     }
     else if(arguments[0]=='\'') //char

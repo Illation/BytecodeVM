@@ -5,6 +5,9 @@
 
 #include "AtomicTypes.h"
 
+//Forward declaration
+class SymbolTable;
+
 class AssemblyCompiler
 {
 public:
@@ -52,12 +55,7 @@ private:
     std::vector<std::string> m_Lines;
     std::vector<uint8> m_Bytecode;
 
-    struct Symbol
-    {
-        std::string name;
-        uint32 value = 0;
-    };
-    std::vector<AssemblyCompiler::Symbol> SymbolTable;
+	SymbolTable* m_pSymbolTable = nullptr;
 
     uint32 m_HeaderSize = 0;
     uint32 m_StackSize = 1048576;
