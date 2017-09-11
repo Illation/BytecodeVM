@@ -1,8 +1,9 @@
 #include "SymbolTable.h"
 
+#include <cassert>
 #include <iostream>
 
-bool SymbolTable::AddFunction(const std::string &name, std::string &arguments, const unsigned int index = 0)
+bool SymbolTable::AddFunction(const std::string &name, std::string &arguments)
 {
 	if(HasSymbol(name))
 		return false;
@@ -88,8 +89,8 @@ bool SymbolTable::AddVariable(const std::string &name, bool isArg)
 void SymbolTable::AllocateStatic()
 {
     std::cout << "[SYMBOL] Instruction count: " << m_NumInstructions << "; Symbols: " << std::endl;
-    unsigned int staticBase = m_StackSize + m_NumInstructions;
-    for(unsigned int i = 0; i < m_Table.size(); ++i)
+    uint32 staticBase = m_StackSize + m_NumInstructions;
+    for(uint32 i = 0; i < m_Table.size(); ++i)
     {
         if(m_Table[i].type == SymbolType::STATIC)
         {
@@ -103,12 +104,12 @@ bool SymbolTable::HasSymbol(const std::string &name) const
 {
 	for(auto sbl : m_Table)
 	{
-		if(sbl.name == name) return = true;
+		if(sbl.name == name) return true;
 	}
 	return false;
 }
 
-unsigned int SymbolTable::GetValue(const std::string &name) const
+uint32 SymbolTable::GetValue(const std::string &name) const
 {
 	for(auto sbl : m_Table)
 	{

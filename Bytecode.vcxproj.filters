@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="source">
+      <UniqueIdentifier>{76FF3A1C-62A1-65F2-4B5C-7946379DEC42}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\Opcode.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\VirtualMachine.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\AssemblyCompiler.h" />
+    <ClInclude Include="source\AtomicTypes.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\SymbolTable.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\main.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Opcode.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\VirtualMachine.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\AssemblyCompiler.cpp" />
+    <ClCompile Include="source\SymbolTable.cpp" />
+  </ItemGroup>
+</Project>

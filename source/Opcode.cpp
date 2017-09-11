@@ -11,4 +11,5 @@ std::string GetOpString(Opcode code)
             break; // to stop searching
         }
     }
+	return key;
 }

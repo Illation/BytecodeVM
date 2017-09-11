@@ -2,7 +2,9 @@
 #include <string>
 #include <vector>
 
-enum class SymbolType : unsigned char
+#include "AtomicTypes.h"
+
+enum class SymbolType : uint8
 {
 	FUNCTION,
 	LABEL,
@@ -14,7 +16,7 @@ enum class SymbolType : unsigned char
 class SymbolTable
 {
 public:
-	SymbolTable(unsigned int stackSize)
+	SymbolTable(uint32 stackSize)
 		:m_StackSize(stackSize)
 	{}
 
@@ -26,24 +28,24 @@ public:
 	void AllocateStatic();
 
 	bool HasSymbol(const std::string &name) const;
-	unsigned int GetValue(const std::string &name) const;
+	uint32 GetValue(const std::string &name) const;
 
-	unsigned int m_NumInstructions = 0;
+	uint32 m_NumInstructions = 0;
 private:
     struct Symbol
     {
         std::string name;
-        unsigned int value = 0;
+        uint32 value = 0;
 		SymbolType type;
     };
-    std::vector<AssemblyCompiler::Symbol> m_Table;
+    std::vector<SymbolTable::Symbol> m_Table;
 
-	unsigned int m_StackSize;
+	uint32 m_StackSize;
 
 	bool m_ParsingStatic = true;
 	
 	//Base addresses for static / automatic memory allocation
-	unsigned int m_StaticCounter = 0;
-	unsigned int m_ArgCounter = 0;
-	unsigned int m_LocalCounter = 0;
+	uint32 m_StaticCounter = 0;
+	uint32 m_ArgCounter = 0;
+	uint32 m_LocalCounter = 0;
 };

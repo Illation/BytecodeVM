@@ -6,11 +6,11 @@
 #include <iostream>
 
 #include "Opcode.h"
+#include "AtomicTypes.h"
 
-VirtualMachine::VirtualMachine(unsigned int stackSize)
-    :m_StackSize(stackSize)
+VirtualMachine::VirtualMachine()
 {
-    m_RAM = new char[MAX_RAM];
+    m_RAM = new uint8[MAX_RAM];
 }
 VirtualMachine::~VirtualMachine()
 {
@@ -36,37 +36,37 @@ bool VirtualMachine::LoadProgram(std::string filename)
     file.seekg(0, std::ios::beg);
     
     // reserve capacity
-    std::vector<char> bytecode;
-    bytecode.reserve(fileSize);
+    std::vector<uint8> bytecode;
+    bytecode.reserve(static_cast<uint32>(fileSize));
     
     // read the data:
     bytecode.insert(bytecode.begin(),
-        std::istream_iterator<char>(file),
-        std::istream_iterator<char>());
+        std::istream_iterator<uint8>(file),
+        std::istream_iterator<uint8>());
 
     SetProgram(bytecode);
 
     return true;
 }
-void VirtualMachine::SetProgram(std::vector<char> bytecode)
+void VirtualMachine::SetProgram(std::vector<uint8> bytecode)
 {
-#ifdef BIG_ENDIAN
-    m_StackSize =   static_cast<unsigned char>(bytecode[3]) << 24 |
-                    static_cast<unsigned char>(bytecode[2]) << 16 |
-                    static_cast<unsigned char>(bytecode[1]) << 8 |
-                    static_cast<unsigned char>(bytecode[0]);
+#ifdef WORD_BIG_ENDIAN
+    m_StackSize =   static_cast<uint8>(bytecode[3]) << 24 |
+                    static_cast<uint8>(bytecode[2]) << 16 |
+                    static_cast<uint8>(bytecode[1]) << 8 |
+                    static_cast<uint8>(bytecode[0]);
 #elif
-    m_StackSize =   static_cast<unsigned char>(bytecode[0]) << 24 |
-                    static_cast<unsigned char>(bytecode[1]) << 16 |
-                    static_cast<unsigned char>(bytecode[2]) << 8 |
-                    static_cast<unsigned char>(bytecode[3]);
+    m_StackSize =   static_cast<uint8>(bytecode[0]) << 24 |
+                    static_cast<uint8>(bytecode[1]) << 16 |
+                    static_cast<uint8>(bytecode[2]) << 8 |
+                    static_cast<uint8>(bytecode[3]);
 #endif
 
-    m_NumInstructions = bytecode.size()-sizeof(int);
+    m_NumInstructions = bytecode.size()-sizeof(int32); //Header size for now
     m_HeapBase = m_NumInstructions + m_StackSize;
-    for(int i = 0; i < m_NumInstructions; ++i)
+    for(uint32 i = 0; i < m_NumInstructions; ++i)
     {
-        m_RAM[i+m_StackSize] = bytecode[i+sizeof(int)];
+        m_RAM[i+m_StackSize] = bytecode[i+sizeof(int32)];
     } 
     ProgramLoaded = true;
 }
@@ -91,20 +91,20 @@ void VirtualMachine::Interpret()
             //Add a byte to the stack
             case Opcode::LITERAL:
             {
-                Push(Unpack<int>(++m_ProgramCounter));
-                m_ProgramCounter+=sizeof(int);
+                Push(Unpack<int32>(++m_ProgramCounter));
+                m_ProgramCounter+=sizeof(int32);
             }
             continue;
 
             //Add multiple bytes to the stack
             case Opcode::LITERAL_ARRAY:
             {
-                int numValues = Unpack<int>(++m_ProgramCounter);
-                m_ProgramCounter+=sizeof(int);
+                int numValues = Unpack<int32>(++m_ProgramCounter);
+                m_ProgramCounter+=sizeof(int32);
                 while(numValues > 0)
                 {
-                    Push(Unpack<int>(m_ProgramCounter));
-                    m_ProgramCounter+=sizeof(int);
+                    Push(Unpack<int32>(m_ProgramCounter));
+                    m_ProgramCounter+=sizeof(int32);
                     --numValues;
                 }
             }
@@ -114,15 +114,15 @@ void VirtualMachine::Interpret()
             //put memory at address on stack
             case Opcode::LOAD:
             {
-                Push(Unpack<int>(Pop()));
+                Push(Unpack<int32>(Pop()));
                 ++m_ProgramCounter;
             }
             continue;
             //store a in memory at b
             case Opcode::STORE:
             {
-                int address = Pop();
-                Pack<int>(address, Pop());
+                int32 address = Pop();
+                Pack<int32>(address, Pop());
                 ++m_ProgramCounter;
             }
             continue;
@@ -131,8 +131,8 @@ void VirtualMachine::Interpret()
             //Add values together
             case Opcode::ADD:
             {
-                int b = Pop();
-                int a = Pop();
+                int32 b = Pop();
+                int32 a = Pop();
                 Push(a + b);
                 ++m_ProgramCounter;
             }
@@ -140,8 +140,8 @@ void VirtualMachine::Interpret()
             //a - b
             case Opcode::SUB:
             {
-                int b = Pop();
-                int a = Pop();
+                int32 b = Pop();
+                int32 a = Pop();
                 Push(a - b);
                 ++m_ProgramCounter;
             }
@@ -151,8 +151,8 @@ void VirtualMachine::Interpret()
             //a < b
             case Opcode::LESS:
             {
-                int b = Pop();
-                int a = Pop();
+                int32 b = Pop();
+                int32 a = Pop();
                 Push(a < b);
                 ++m_ProgramCounter;
             }
@@ -160,8 +160,8 @@ void VirtualMachine::Interpret()
             //a > b
             case Opcode::GREATER:
             {
-                int b = Pop();
-                int a = Pop();
+                int32 b = Pop();
+                int32 a = Pop();
                 Push(a > b);
                 ++m_ProgramCounter;
             }
@@ -169,7 +169,7 @@ void VirtualMachine::Interpret()
             //!a
             case Opcode::NOT:
             {
-                int a = Pop();
+                int32 a = Pop();
                 Push(!a);
                 ++m_ProgramCounter;
             }
@@ -177,8 +177,8 @@ void VirtualMachine::Interpret()
             //a == b
             case Opcode::EQUALS:
             {
-                int b = Pop();
-                int a = Pop();
+                int32 b = Pop();
+                int32 a = Pop();
                 Push(a == b);
                 ++m_ProgramCounter;
             }
@@ -188,18 +188,18 @@ void VirtualMachine::Interpret()
             //goto a
             case Opcode::JMP:
             {
-                int address = Pop();
-                m_ProgramCounter = address;
+                int32 address = Pop();
+                m_ProgramCounter = static_cast<uint32>(address);
             }
             continue;
             //if(a) goto b
             case Opcode::JMP_IF:
             {
-                int address = Pop();
-                int condition = Pop();
+                int32 address = Pop();
+                int32 condition = Pop();
                 if(condition)
                 {
-                    m_ProgramCounter = address;
+                    m_ProgramCounter = static_cast<uint32>(address);
                 }
                 else
                 {
@@ -212,9 +212,9 @@ void VirtualMachine::Interpret()
             //print x chars to console
             case Opcode::PRINT:
             {
-                unsigned int size = Pop();
+                uint32 size = Pop();
                 std::string out;
-                for(int j = 0; j<size; ++j)
+                for(uint32 j = 0; j<size; ++j)
                 {
                     out = static_cast<char>(Pop()) + out;
                 }
@@ -239,52 +239,52 @@ void VirtualMachine::Interpret()
 
             //INVALID
             default:
-            std::cerr << "Invalid opcode: " << int(static_cast<char>(operation)) << std::endl;
+            std::cerr << "Invalid opcode: " << GetOpString(operation) << std::endl;
             assert(false);
             continue;
         }
     }
 }
 
-void VirtualMachine::Push(int value)
+void VirtualMachine::Push(int32 value)
 {
-    assert(m_StackPointer + sizeof(int) < (int)m_StackSize); 
-    Pack<int>(m_StackPointer+=sizeof(int), value);
+    assert(m_StackPointer + sizeof(int32) < (int32)m_StackSize); 
+    Pack<int32>(m_StackPointer+=sizeof(int32), value);
 }
 int VirtualMachine::Pop()
 {
     assert(m_StackPointer >= 0); 
-    int value = Unpack<int>(m_StackPointer);
-    m_StackPointer -= sizeof(int);
+    int32 value = Unpack<int32>(m_StackPointer);
+    m_StackPointer -= sizeof(int32);
     return value;
 }
 
 template<typename T>
-T VirtualMachine::Unpack(unsigned int address)
+T VirtualMachine::Unpack(uint32 address)
 {
-#ifdef BIG_ENDIAN
-    unsigned int value =    static_cast<unsigned char>(m_RAM[address+3]) << 24 |
-                            static_cast<unsigned char>(m_RAM[address+2]) << 16 |
-                            static_cast<unsigned char>(m_RAM[address+1]) << 8 |
-                            static_cast<unsigned char>(m_RAM[address+0]);
+#ifdef WORD_BIG_ENDIAN
+    uint32 value =	static_cast<uint8>(m_RAM[address+3]) << 24 |
+					static_cast<uint8>(m_RAM[address+2]) << 16 |
+					static_cast<uint8>(m_RAM[address+1]) << 8 |
+					static_cast<uint8>(m_RAM[address+0]);
 #elif
-    unsigned int value =    static_cast<unsigned char>(m_RAM[address+0]) << 24 |
-                            static_cast<unsigned char>(m_RAM[address+1]) << 16 |
-                            static_cast<unsigned char>(m_RAM[address+2]) << 8 |
-                            static_cast<unsigned char>(m_RAM[address+3]);
+    uint32 value =  static_cast<uint8>(m_RAM[address+0]) << 24 |
+					static_cast<uint8>(m_RAM[address+1]) << 16 |
+					static_cast<uint8>(m_RAM[address+2]) << 8 |
+					static_cast<uint8>(m_RAM[address+3]);
 #endif
     return static_cast<T>(value);
 }
 template<typename T>
-void VirtualMachine::Pack(unsigned int address, T value)
+void VirtualMachine::Pack(uint32 address, T value)
 {
-   unsigned int n = static_cast<unsigned int>(value);
-#ifdef BIG_ENDIAN
+   uint32 n = static_cast<uint32>(value);
+#ifdef WORD_BIG_ENDIAN
    m_RAM[address+3] = (n >> 24) & 0xFF;
    m_RAM[address+2] = (n >> 16) & 0xFF;
    m_RAM[address+1] = (n >> 8) & 0xFF;
    m_RAM[address+0] = n & 0xFF;
-#elif
+#elif //WORD_LITTLE_ENDIAN
    m_RAM[address+0] = (n >> 24) & 0xFF;
    m_RAM[address+1] = (n >> 16) & 0xFF;
    m_RAM[address+2] = (n >> 8) & 0xFF;

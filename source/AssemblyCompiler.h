@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "AtomicTypes.h"
+
 class AssemblyCompiler
 {
 public:
@@ -25,7 +27,7 @@ public:
 
     CompState GetState(){return m_State;}
     bool Save(std::string filename);
-    std::vector<char> GetBytecode();
+    std::vector<uint8> GetBytecode();
 
 private:
     bool BuildSymbolTable();
@@ -33,30 +35,30 @@ private:
     bool CompileHeader();
 
     bool TokenizeLine(std::string line, std::string &opname, std::string &arguments);
-    bool IsValidOpname(std::string opname, unsigned int line);
+    bool IsValidOpname(std::string opname, uint32 line);
 
     void CheckVar(std::string &arguments);
 
-    bool HasValidArgs(std::string arguments, unsigned int line, std::string opname);
-    bool ParseLiteral(int &out, std::string &arguments);
-    void WriteInt(int value);
-    void WriteInt(int value, std::vector<char> &target);
+    bool HasValidArgs(std::string arguments, uint32 line, std::string opname);
+    bool ParseLiteral(int32 &out, std::string &arguments);
+    void WriteInt(int32 value);
+    void WriteInt(int32 value, std::vector<uint8> &target);
 
-    void PrintAbort(unsigned int line);
+    void PrintAbort(uint32 line);
 
 private:
     CompState m_State = CompState::INIT;
 
     std::vector<std::string> m_Lines;
-    std::vector<char> m_Bytecode;
+    std::vector<uint8> m_Bytecode;
 
     struct Symbol
     {
         std::string name;
-        unsigned int value = 0;
+        uint32 value = 0;
     };
     std::vector<AssemblyCompiler::Symbol> SymbolTable;
 
-    unsigned int m_HeaderSize = 0;
-    unsigned int m_StackSize = 1048576;
+    uint32 m_HeaderSize = 0;
+    uint32 m_StackSize = 1048576;
 };

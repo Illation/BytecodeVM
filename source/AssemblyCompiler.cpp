@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <iterator>
+#include <cctype>
 
 #include "Opcode.h"
 
@@ -88,9 +89,9 @@ bool AssemblyCompiler::Compile()
 
 bool AssemblyCompiler::BuildSymbolTable()
 {
-    unsigned int numInstr = 0;
+    uint32 numInstr = 0;
 
-    for(unsigned int line = 0; line < m_Lines.size(); ++line)
+    for(uint32 line = 0; line < m_Lines.size(); ++line)
     {
         std::string opname;
         std::string arguments;
@@ -140,7 +141,7 @@ bool AssemblyCompiler::BuildSymbolTable()
                         PrintAbort(line);
                         return false;
                     }
-                    int j = 1;
+                    uint32 j = 1;
                     while(arguments[j] != '\"')
                     {
                         numInstr+=4;
@@ -167,8 +168,8 @@ bool AssemblyCompiler::BuildSymbolTable()
 
     //Static memory allocation
     std::cout << "[ASM CMP] Instruction count: " << numInstr << "; Symbols: " << std::endl;
-    unsigned int freeAddress = m_StackSize + numInstr;
-    for(unsigned int i = 0; i < SymbolTable.size(); ++i)
+    uint32 freeAddress = m_StackSize + numInstr;
+    for(uint32 i = 0; i < SymbolTable.size(); ++i)
     {
         if(SymbolTable[i].name[0] == '#')
         {
@@ -183,7 +184,7 @@ bool AssemblyCompiler::BuildSymbolTable()
 
 bool AssemblyCompiler::CompileInstructions()
 {
-    for(unsigned int line = 0; line < m_Lines.size(); ++line)
+    for(uint32 line = 0; line < m_Lines.size(); ++line)
     {
         std::string opname;
         std::string arguments;
@@ -199,10 +200,10 @@ bool AssemblyCompiler::CompileInstructions()
         case Opcode::LITERAL:
             {
                 if(!HasValidArgs(arguments, line, opname))return false;
-                int parsed;
+                int32 parsed;
                 if(ParseLiteral(parsed, arguments))
                 {
-                    m_Bytecode.push_back(static_cast<char>(code));
+                    m_Bytecode.push_back(static_cast<uint8>(code));
                     WriteInt(parsed);
                 }
                 else
@@ -216,9 +217,9 @@ bool AssemblyCompiler::CompileInstructions()
         case Opcode::LITERAL_ARRAY:
             {
                 if(!HasValidArgs(arguments, line, opname))return false;
-                m_Bytecode.push_back(static_cast<char>(code));
+                m_Bytecode.push_back(static_cast<uint8>(code));
 
-                std::vector<int> arr;
+                std::vector<int32> arr;
                 if(arguments[0] == '\"')
                 {
                     if(arguments.size()==1)
@@ -227,7 +228,7 @@ bool AssemblyCompiler::CompileInstructions()
                         PrintAbort(line);
                         return false;
                     }
-                    int j = 1;
+                    uint32 j = 1;
                     while(arguments[j] != '\"')
                     {
                         if(j >= arguments.size())
@@ -236,7 +237,7 @@ bool AssemblyCompiler::CompileInstructions()
                             PrintAbort(line);
                             return false;
                         }
-                        arr.push_back(int(arguments[j]));
+                        arr.push_back(int32(arguments[j]));
 
                         ++j;
                     }
@@ -245,7 +246,7 @@ bool AssemblyCompiler::CompileInstructions()
                 {
                     while(arguments.size() > 0)
                     {
-                        int parsed;
+                        int32 parsed;
                         if(ParseLiteral(parsed, arguments))
                         {
                             WriteInt(parsed);
@@ -258,13 +259,13 @@ bool AssemblyCompiler::CompileInstructions()
                         } 
                     }
                 }
-                WriteInt(arr.size());
+                WriteInt(static_cast<int32>(arr.size()));
                 for(auto value : arr) WriteInt(value);
             }
             break;
 
         default:
-            m_Bytecode.push_back(static_cast<char>(code));
+            m_Bytecode.push_back(static_cast<uint8>(code));
             break;
         }
     }
@@ -273,7 +274,7 @@ bool AssemblyCompiler::CompileInstructions()
 
 bool AssemblyCompiler::CompileHeader()
 {
-    std::vector<char> header;
+    std::vector<uint8> header;
     WriteInt(m_StackSize, header);
 
     m_HeaderSize = header.size();
@@ -298,7 +299,7 @@ bool AssemblyCompiler::Save(std::string filename)
         return false;
     }
 
-    for(int i = 0; i < m_Bytecode.size(); ++i)
+    for(uint32 i = 0; i < m_Bytecode.size(); ++i)
     {
         output << m_Bytecode[i];
     }
@@ -306,7 +307,7 @@ bool AssemblyCompiler::Save(std::string filename)
     std::cout << "[ASM CMP] Executable saved!" << std::endl;
     return true;
 }
-std::vector<char> AssemblyCompiler::GetBytecode()
+std::vector<uint8> AssemblyCompiler::GetBytecode()
 {
     if(!(m_State == CompState::COMPILED))
     {
@@ -337,7 +338,7 @@ bool AssemblyCompiler::TokenizeLine(std::string line, std::string &opname, std::
 
     return true;
 }
-bool AssemblyCompiler::IsValidOpname(std::string opname, unsigned int line)
+bool AssemblyCompiler::IsValidOpname(std::string opname, uint32 line)
 {
     if(!(OpcodeNames.count(opname)))
     {
@@ -380,7 +381,7 @@ void AssemblyCompiler::CheckVar(std::string &arguments)
     }
 }
 
-bool AssemblyCompiler::HasValidArgs(std::string arguments, unsigned int line, std::string opname)
+bool AssemblyCompiler::HasValidArgs(std::string arguments, uint32 line, std::string opname)
 {
     if(arguments.size()==0)
     {
@@ -396,7 +397,7 @@ bool isNumber(const std::string& s)
     while (it != s.end() && std::isdigit(*it)) ++it;
     return !s.empty() && it == s.end();
 }
-bool AssemblyCompiler::ParseLiteral(int &out, std::string &arguments)
+bool AssemblyCompiler::ParseLiteral(int32 &out, std::string &arguments)
 {
     if((arguments[0]=='#') || (arguments[0]=='@')) //Replace mnemonics (variables, lables)
     {
@@ -416,7 +417,7 @@ bool AssemblyCompiler::ParseLiteral(int &out, std::string &arguments)
         {
             if(sbl.name == arg) 
             {
-                out = int(sbl.value);
+                out = int32(sbl.value);
                 return true;
             }
         }
@@ -424,7 +425,7 @@ bool AssemblyCompiler::ParseLiteral(int &out, std::string &arguments)
     }
     else if(arguments[0]=='\'') //char
     {
-        out = int(arguments[1]);
+        out = int32(arguments[1]);
         std::size_t nDelim = arguments.find('\'', 1);
         if(nDelim = std::string::npos)
         {
@@ -450,13 +451,13 @@ bool AssemblyCompiler::ParseLiteral(int &out, std::string &arguments)
     }
     return false;
 }
-void AssemblyCompiler::WriteInt(int value)
+void AssemblyCompiler::WriteInt(int32 value)
 {
     WriteInt(value, m_Bytecode);
 }
-void AssemblyCompiler::WriteInt(int value, std::vector<char> &target)
+void AssemblyCompiler::WriteInt(int32 value, std::vector<uint8> &target)
 {
-#ifdef BIG_ENDIAN
+#ifdef WORD_BIG_ENDIAN
    target.push_back(value & 0xFF);
    target.push_back((value >> 8) & 0xFF);
    target.push_back((value >> 16) & 0xFF);
@@ -469,7 +470,7 @@ void AssemblyCompiler::WriteInt(int value, std::vector<char> &target)
 #endif
 }
 
-void AssemblyCompiler::PrintAbort(unsigned int line)
+void AssemblyCompiler::PrintAbort(uint32 line)
 {
     std::cerr << m_Lines[line] << std::endl;
     std::cerr << "[ASM CMP]" <<  std::endl;
