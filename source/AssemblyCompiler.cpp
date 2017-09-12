@@ -19,6 +19,9 @@ AssemblyCompiler::~AssemblyCompiler()
 {
     m_Lines.clear();
     m_Bytecode.clear();
+
+	delete m_pSymbolTable;
+	m_pSymbolTable = nullptr;
 }
 
 
@@ -101,11 +104,22 @@ bool AssemblyCompiler::BuildSymbolTable()
         std::string arguments;
         if(!TokenizeLine(m_Lines[line], opname, arguments))continue;
 
+		//Jump labels
         if(opname[0] == '@')
         {
             if(!m_pSymbolTable->AddLabel(opname))
             {
                 std::cerr << "[ASM CMP] " << line << ": label " << opname << " already defined!" << std::endl;
+                return false;
+            }
+			continue;
+        }
+        if(opname[0] == '$')
+        {
+			m_pSymbolTable->m_NumInstructions += 4; //First instruction is int32 numArgs
+            if(!m_pSymbolTable->AddFunction(opname, arguments))
+            {
+                std::cerr << "[ASM CMP] " << line << ": error adding function: " << opname << std::endl;
                 return false;
             }
 			continue;
@@ -174,6 +188,19 @@ bool AssemblyCompiler::CompileInstructions()
         std::string arguments;
         if(!TokenizeLine(m_Lines[line], opname, arguments))continue;
         if(opname[0] == '@') continue; //Skip labels
+        if(opname[0] == '$') //Write num arguments for function
+        {
+			int32 numArguments = 0;
+			while(arguments.size() > 0)
+			{
+				std::size_t nDelim = arguments.find('\'', 1);
+				if(nDelim == std::string::npos) break;
+				arguments = arguments.substr(nDelim+1);
+				++numArguments;
+			}
+			WriteInt(numArguments);
+			continue;
+        }
 
         if(!IsValidOpname(opname, line))return false;
 
@@ -338,14 +365,14 @@ void AssemblyCompiler::CheckVar(std::string &arguments)
     //Separate first argument out
     std::string arg;
     std::size_t nDelim = arguments.find(' ', 1);
-    if(nDelim = std::string::npos)
+    if(nDelim == std::string::npos)
     {
         arg = arguments;
         arguments = std::string();
     }
     else
     {
-        arg = arguments.substr(0, nDelim-1);
+        arg = arguments.substr(0, nDelim);
         arguments = arguments.substr(nDelim+1);
     }
     //Handle found variable
@@ -373,18 +400,18 @@ bool isNumber(const std::string& s)
 }
 bool AssemblyCompiler::ParseLiteral(int32 &out, std::string &arguments)
 {
-    if((arguments[0]=='#') || (arguments[0]=='@')) //Replace mnemonics (variables, lables)
+    if((arguments[0]=='#') || (arguments[0]=='@') || (arguments[0]=='$')) //Replace mnemonics (variables, lables, functions)
     {
         std::string arg;
         std::size_t nDelim = arguments.find(' ', 1);
-        if(nDelim = std::string::npos)
+        if(nDelim == std::string::npos)
         {
             arg = arguments;
             arguments = std::string();
         }
         else
         {
-            arg = stoi(arguments.substr(0, nDelim-1));
+            arg = stoi(arguments.substr(0, nDelim));
             arguments = arguments.substr(nDelim+1);
         }
 		if(m_pSymbolTable->HasSymbol(arg)) 
@@ -398,7 +425,7 @@ bool AssemblyCompiler::ParseLiteral(int32 &out, std::string &arguments)
     {
         out = int32(arguments[1]);
         std::size_t nDelim = arguments.find('\'', 1);
-        if(nDelim = std::string::npos)
+        if(nDelim == std::string::npos)
         {
             arguments = std::string();
         }
@@ -408,14 +435,14 @@ bool AssemblyCompiler::ParseLiteral(int32 &out, std::string &arguments)
     else if(isNumber(arguments)) //int
     {
         std::size_t nDelim = arguments.find(' ', 1);
-        if(nDelim = std::string::npos)
+        if(nDelim == std::string::npos)
         {
             out = stoi(arguments);
             arguments = std::string();
         }
         else
         {
-            out = stoi(arguments.substr(0, nDelim-1));
+            out = stoi(arguments.substr(0, nDelim));
             arguments = arguments.substr(nDelim+1);
         }
         return true;

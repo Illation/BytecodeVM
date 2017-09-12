@@ -10,6 +10,10 @@ enum class Opcode : char
 
     LOAD,
     STORE,
+    LOAD_LCL,
+    STORE_LCL,
+    LOAD_ARG,
+    STORE_ARG,
 
     ADD,
     SUB,
@@ -22,6 +26,9 @@ enum class Opcode : char
     JMP,
     JMP_IF,
 
+	CALL,
+	RETURN,
+
     PRINT,
     PRINT_INT,
     PRINT_ENDL
@@ -33,6 +40,10 @@ static std::map<std::string, Opcode> OpcodeNames
 
     {"LOAD", Opcode::LOAD},
     {"STORE", Opcode::STORE},
+    {"LOAD_LCL", Opcode::LOAD_LCL},
+    {"STORE_LCL", Opcode::STORE_LCL},
+    {"LOAD_ARG", Opcode::LOAD_ARG},
+    {"STORE_ARG", Opcode::STORE_ARG},
 
     {"ADD", Opcode::ADD},
     {"SUB", Opcode::SUB},
@@ -44,6 +55,9 @@ static std::map<std::string, Opcode> OpcodeNames
 
     {"JMP", Opcode::JMP},
     {"JMP_IF", Opcode::JMP_IF},
+
+    {"CALL", Opcode::CALL},
+    {"RETURN", Opcode::RETURN},
     
     {"PRINT", Opcode::PRINT},
     {"PRINT_INT", Opcode::PRINT_INT},

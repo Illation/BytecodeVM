@@ -26,14 +26,14 @@ bool SymbolTable::AddFunction(const std::string &name, std::string &arguments)
 	{
 		std::string arg;
 		std::size_t nDelim = arguments.find(' ', 1);
-		if(nDelim = std::string::npos)
+		if(nDelim == std::string::npos)
 		{
 			arg = arguments;
 			arguments = std::string();
 		}
 		else
 		{
-			arg = arguments.substr(0, nDelim-1);
+			arg = arguments.substr(0, nDelim);
 			arguments = arguments.substr(nDelim+1);
 		}
 		if(!(AddVariable(arg, true))) return false;
@@ -60,10 +60,12 @@ bool SymbolTable::AddVariable(const std::string &name, bool isArg)
 	auto sbl = SymbolTable::Symbol();
 	sbl.name = name;
 
-	//Check variable type
-	assert(isArg != m_ParsingStatic);//Static segments don't have arguments
-
-	if(isArg) sbl.type = SymbolType::ARG;
+	if(isArg) 
+	{
+		if(m_ParsingStatic)
+			return false;//Static segments don't have arguments
+		sbl.type = SymbolType::ARG;
+	}
 	else if(m_ParsingStatic) sbl.type = SymbolType::STATIC;
 	else sbl.type = SymbolType::LOCAL;
 	
