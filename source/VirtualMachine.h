@@ -52,19 +52,19 @@ private:
 
 	//Stack Frame Layout for function with n arguments and k locals
 	/*
-		ARG->	arg 0		//****Arguments
+		ARG->	arg 0		****Arguments
 				arg 1		<--all arguments are items from previous functions working stack	
 				...
 				arg n-1
-		LCL-16->saved RTN	//****Stack frame begin
+		LCL-16->saved RTN	****Stack frame begin
 				saved LCL
 				saved ARG
 				saved THIS	<--for object support
-		LCL->	loc 0		//****Local variables
+		LCL->	loc 0		****Local variables
 				loc 1
 				loc ...
 				loc k-1
-				ws 0		//****Working Stack
+				ws 0		****Working Stack
 		SP->	ws 1
 	*/
 };

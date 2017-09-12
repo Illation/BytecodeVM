@@ -303,7 +303,7 @@ void VirtualMachine::Interpret()
 
 void VirtualMachine::Push(int32 value)
 {
-    assert(m_StackPointer + sizeof(int32) < (int32)m_StackSize); //Stack Overflow
+    assert(m_StackPointer + sizeof(int32) < m_StackSize); //Stack Overflow
     Pack<int32>(m_StackPointer+=sizeof(int32), value);
 }
 int VirtualMachine::Pop()

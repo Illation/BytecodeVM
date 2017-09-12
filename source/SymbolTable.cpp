@@ -87,6 +87,8 @@ bool SymbolTable::AddVariable(const std::string &name, bool isArg)
 			sbl.value = m_CurrentFunc.numArg;
 			m_CurrentFunc.numArg += 4; 
 			break;
+		default:
+			break;
 	}
 	m_Table.push_back(sbl);
 	return true;
