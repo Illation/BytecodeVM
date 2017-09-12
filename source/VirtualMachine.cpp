@@ -229,6 +229,37 @@ void VirtualMachine::Interpret()
                 }
             }
             continue;
+			
+			//FUNCTIONS
+			//put a new frame on the stack with n arguments and k local variables
+			case Opcode::CALL:
+            {
+				uint32 ret = m_ProgramCounter + 1;
+				m_ProgramCounter = static_cast<uint32>(Pop());
+				Push(m_RTN);
+				m_RTN = ret;
+				Push(m_LCL);
+				Push(m_ARG);
+				Push(m_THIS); //This stays the same because we are doing a function not a method
+				m_ARG = m_StackPointer - (Unpack<int32>(m_ProgramCounter) + 12/*difference from this to return*/);
+				m_ProgramCounter += sizeof(int32);
+				m_LCL = m_StackPointer + sizeof(int32);
+				m_StackPointer = m_LCL + Unpack<int32>(m_ProgramCounter);
+				m_ProgramCounter += sizeof(int32);
+            }
+            continue;
+			//Return from current function to previous function on stack and copy end values over
+			case Opcode::RETURN: //#todo stop assuming return value size
+            {
+				Pack<int32>(m_ARG, Pop());
+                m_ProgramCounter = m_RTN;
+				m_StackPointer = m_ARG - sizeof(int32);
+				m_THIS = Unpack<int32>(m_LCL - (sizeof(int32) * 1));
+				m_ARG = Unpack<int32>(m_LCL - (sizeof(int32) * 2));
+				m_RTN = Unpack<int32>(m_LCL - (sizeof(int32) * 4));
+				m_LCL = Unpack<int32>(m_LCL - (sizeof(int32) * 3));
+            }
+            continue;
 
             //"Library functions" should later be implemented differently
             //print x chars to console
@@ -275,7 +306,7 @@ void VirtualMachine::Push(int32 value)
 }
 int VirtualMachine::Pop()
 {
-    assert(m_StackPointer >= 0); //Invalid memory access "Stack underflow"
+    assert(m_StackPointer >= 0); //Invalid memory access "Stack underflow" - this does not protect against the SP underflowing the working stack
     int32 value = Unpack<int32>(m_StackPointer);
     m_StackPointer -= sizeof(int32);
     return value;

@@ -36,6 +36,8 @@ CALL
 PRINT_INT
 PRINT_ENDL
 
+LITERAL @end
+JMP
 
 
 //var loop_mult(arg_a, arg_b)
@@ -87,3 +89,5 @@ JMP
 LITERAL #acc
 LOAD_LCL
 RETURN
+
+@end
