@@ -23,6 +23,7 @@ bool SymbolTable::AddFunction(const std::string &name, std::string &arguments)
 
 	//The following variables are not static anymore
 	SetParsingStatic(false, name);
+	m_NumInstructions += 8;//First two instructions are int32 numArgs and int32 numLoc
 	
 	//Also add function arguments (parameters)
 	while(arguments.size() > 0)
@@ -95,7 +96,11 @@ void SymbolTable::SetParsingStatic(bool staticSection /*= true*/, std::string fu
 {
 	m_ParsingStatic = staticSection;
 	//Prepare for next function
-	if (m_CurrentFunc.name.size() > 0) m_FuncTable.push_back(m_CurrentFunc);
+	if (m_CurrentFunc.name.size() > 0)
+	{
+		m_FuncTable.push_back(m_CurrentFunc);
+		std::cout << "[SYMBOL] function: " << m_CurrentFunc.name << "; args: " << m_CurrentFunc.numArg << "; vars: " << m_CurrentFunc.numLoc << std::endl;
+	}
 	m_CurrentFunc = SymbolTable::Func();
 	m_CurrentFunc.name = functionName;
 }
@@ -111,6 +116,10 @@ void SymbolTable::AllocateStatic()
             m_Table[i].value += staticBase;
         }
         std::cout << "[SYMBOL] name: " << m_Table[i].name << "; value: " << m_Table[i].value << std::endl;
+        if(m_Table[i].type == SymbolType::FUNCTION)
+        {
+			std::cout << "[SYMBOL]     instruction pointer: " << m_Table[i].value - m_StackSize << std::endl;
+        }
     }
 }
 

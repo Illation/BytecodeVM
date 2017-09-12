@@ -1,0 +1,29 @@
+<<("Hello World!")
+<<endl
+
+var a = 6
+var b = 11
+
+print_mult(a, b)
+
+a-=3
+
+print_mult(a, b)
+
+b-=5
+
+print_mult(a, b)
+
+void print_mult(var pm_a, var pm_b)
+	<<(pm_a)
+	<<(" * ")
+	<<(pm_b)
+	<<(" = ")
+	<<(loop_mult(pm_a, pm_b)
+	<<endl
+	
+var loop_mult(var arg_a, var arg_b)
+	var acc = 0
+	for(var i = 0; i < arg_b; ++i)
+		acc += arg_a
+	return acc

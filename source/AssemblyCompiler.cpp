@@ -116,7 +116,6 @@ bool AssemblyCompiler::BuildSymbolTable()
         }
         if(opname[0] == '$')
         {
-			m_pSymbolTable->m_NumInstructions += 8; //First two instructions are int32 numArgs and int32 numLoc
             if(!m_pSymbolTable->AddFunction(opname, arguments))
             {
                 std::cerr << "[ASM CMP] " << line << ": error adding function: " << opname << std::endl;

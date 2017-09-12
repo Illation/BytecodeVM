@@ -86,6 +86,8 @@ void VirtualMachine::Interpret()
 
         Opcode operation = static_cast<Opcode>(m_RAM[m_ProgramCounter]);
 
+		//std::cout << "[DBG] operation: " << GetOpString(operation) << std::endl;
+
         switch(operation)
         {
             //Add a byte to the stack
@@ -251,9 +253,9 @@ void VirtualMachine::Interpret()
 			//Return from current function to previous function on stack and copy end values over
 			case Opcode::RETURN: //#todo stop assuming return value size
             {
-				Pack<int32>(m_ARG, Pop());
                 m_ProgramCounter = m_RTN;
-				m_StackPointer = m_ARG - sizeof(int32);
+				Pack<int32>(m_ARG, Pop());
+				m_StackPointer = m_ARG;
 				m_THIS = Unpack<int32>(m_LCL - (sizeof(int32) * 1));
 				m_ARG = Unpack<int32>(m_LCL - (sizeof(int32) * 2));
 				m_RTN = Unpack<int32>(m_LCL - (sizeof(int32) * 4));

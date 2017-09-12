@@ -14,31 +14,92 @@ LITERAL 11
 LITERAL #b
 STORE
 
-//<<(a) <<(" * ") <<(b) <<(" = ") <<(loop_mult(a, b)) <<endl
-LITERAL #a
-LOAD
-PRINT_INT
-LITERAL_ARRAY " * "
-LITERAL 3
-PRINT
-LITERAL #b
-LOAD
-PRINT_INT
-LITERAL_ARRAY " = "
-LITERAL 3
-PRINT
+//print_mult(a, b)
 LITERAL #a
 LOAD
 LITERAL #b
 LOAD
-LITERAL $loop_mult
+LITERAL $print_mult
 CALL
-PRINT_INT
-PRINT_ENDL
+LITERAL #temp
+STORE
+
+//a-=3
+LITERAL #a
+LOAD
+LITERAL 3
+SUB
+LITERAL #a
+STORE
+
+//print_mult(a, b)
+LITERAL #a
+LOAD
+LITERAL #b
+LOAD
+LITERAL $print_mult
+CALL
+LITERAL #temp
+STORE
+
+//b-=5
+LITERAL #b
+LOAD
+LITERAL 5
+SUB
+LITERAL #b
+STORE
+
+//print_mult(a, b)
+LITERAL #a
+LOAD
+LITERAL #b
+LOAD
+LITERAL $print_mult
+CALL
+LITERAL #temp
+STORE
 
 LITERAL @end
 JMP
 
+//var print_mult(pm_a, pm_b)
+//  <<(a) 
+//  <<(" * ") 
+//  <<(b) 
+//  <<(" = ") 
+//  <<(loop_mult(a, b)) 
+//  <<endl
+
+$print_mult #pm_a #pm_b
+
+LITERAL #pm_a
+LOAD_ARG
+PRINT_INT
+
+LITERAL_ARRAY " * "
+LITERAL 3
+PRINT
+
+LITERAL #pm_b
+LOAD_ARG
+PRINT_INT
+
+LITERAL_ARRAY " = "
+LITERAL 3
+PRINT
+
+LITERAL #pm_a
+LOAD_ARG
+LITERAL #pm_b
+LOAD_ARG
+LITERAL $loop_mult
+CALL
+PRINT_INT
+
+PRINT_ENDL
+
+RETURN
 
 //var loop_mult(arg_a, arg_b)
 //  var acc = 0
