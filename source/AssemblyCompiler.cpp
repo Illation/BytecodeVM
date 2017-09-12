@@ -116,7 +116,7 @@ bool AssemblyCompiler::BuildSymbolTable()
         }
         if(opname[0] == '$')
         {
-			m_pSymbolTable->m_NumInstructions += 4; //First instruction is int32 numArgs
+			m_pSymbolTable->m_NumInstructions += 8; //First two instructions are int32 numArgs and int32 numLoc
             if(!m_pSymbolTable->AddFunction(opname, arguments))
             {
                 std::cerr << "[ASM CMP] " << line << ": error adding function: " << opname << std::endl;
@@ -175,6 +175,7 @@ bool AssemblyCompiler::BuildSymbolTable()
         }
     }
 
+	m_pSymbolTable->SetParsingStatic();
 	m_pSymbolTable->AllocateStatic();
 
     return true;
@@ -188,17 +189,10 @@ bool AssemblyCompiler::CompileInstructions()
         std::string arguments;
         if(!TokenizeLine(m_Lines[line], opname, arguments))continue;
         if(opname[0] == '@') continue; //Skip labels
-        if(opname[0] == '$') //Write num arguments for function
+        if(opname[0] == '$') //Write num arguments and variables for function
         {
-			int32 numArguments = 0;
-			while(arguments.size() > 0)
-			{
-				std::size_t nDelim = arguments.find('\'', 1);
-				if(nDelim == std::string::npos) break;
-				arguments = arguments.substr(nDelim+1);
-				++numArguments;
-			}
-			WriteInt(numArguments);
+			WriteInt(m_pSymbolTable->GetFunctionArgCount(opname));
+			WriteInt(m_pSymbolTable->GetFunctionVarCount(opname));
 			continue;
         }
 

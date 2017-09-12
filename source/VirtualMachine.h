@@ -34,6 +34,7 @@ private:
     uint32 m_NumInstructions = 0;
     uint32 m_HeapBase = 0;
 
+	//State
     bool ProgramLoaded = false;
 
     //RAM
@@ -42,5 +43,28 @@ private:
     //Registers
     uint32 m_ProgramCounter = 0;
 
-    int32 m_StackPointer = -4; //This could also be a static variable
+	//Stack frame, potentially static variables if so desired
+    int32 m_StackPointer = -4; 
+	uint32 m_LCL = 0;	//Current local base address
+	uint32 m_ARG = 0;	//Current argument base address
+	uint32 m_RTN = 0;	//Current return address
+	uint32 m_THIS = 0;	//Pointer to current object
+
+	//Stack Frame Layout for function with n arguments and k locals
+	/*
+		ARG->	arg 0		//****Arguments
+				arg 1		<--all arguments are items from previous functions working stack	
+				...
+				arg n-1
+		LCL-16->saved RTN	//****Stack frame begin
+				saved LCL
+				saved ARG
+				saved THIS	<--for object support
+		LCL->	loc 0		//****Local variables
+				loc 1
+				loc ...
+				loc k-1
+				ws 0		//****Working Stack
+		SP->	ws 1
+	*/
 };

@@ -126,6 +126,28 @@ void VirtualMachine::Interpret()
                 ++m_ProgramCounter;
             }
             continue;
+            //put memory at local address on stack
+            case Opcode::LOAD_LCL:
+            {
+                Push(Unpack<int32>(m_LCL+Pop()));
+                ++m_ProgramCounter;
+            }
+            continue;
+            //store a in memory at local b
+            case Opcode::STORE_LCL:
+            {
+                int32 address = m_LCL+Pop();
+                Pack<int32>(address, Pop());
+                ++m_ProgramCounter;
+            }
+            continue;
+            //put memory at argument address on stack
+            case Opcode::LOAD_ARG:
+            {
+                Push(Unpack<int32>(m_ARG+Pop()));
+                ++m_ProgramCounter;
+            }
+            continue;
 
             //ARITHMETIC OPERATIONS
             //Add values together
@@ -248,12 +270,12 @@ void VirtualMachine::Interpret()
 
 void VirtualMachine::Push(int32 value)
 {
-    assert(m_StackPointer + sizeof(int32) < (int32)m_StackSize); 
+    assert(m_StackPointer + sizeof(int32) < (int32)m_StackSize); //Stack Overflow
     Pack<int32>(m_StackPointer+=sizeof(int32), value);
 }
 int VirtualMachine::Pop()
 {
-    assert(m_StackPointer >= 0); 
+    assert(m_StackPointer >= 0); //Invalid memory access "Stack underflow"
     int32 value = Unpack<int32>(m_StackPointer);
     m_StackPointer -= sizeof(int32);
     return value;

@@ -13,7 +13,6 @@ enum class Opcode : char
     LOAD_LCL,
     STORE_LCL,
     LOAD_ARG,
-    STORE_ARG,
 
     ADD,
     SUB,
@@ -43,7 +42,6 @@ static std::map<std::string, Opcode> OpcodeNames
     {"LOAD_LCL", Opcode::LOAD_LCL},
     {"STORE_LCL", Opcode::STORE_LCL},
     {"LOAD_ARG", Opcode::LOAD_ARG},
-    {"STORE_ARG", Opcode::STORE_ARG},
 
     {"ADD", Opcode::ADD},
     {"SUB", Opcode::SUB},

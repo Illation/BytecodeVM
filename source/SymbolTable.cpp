@@ -3,6 +3,12 @@
 #include <cassert>
 #include <iostream>
 
+SymbolTable::SymbolTable(uint32 stackSize)
+	:m_StackSize(stackSize)
+{
+	m_CurrentFunc = SymbolTable::Func();
+}
+
 bool SymbolTable::AddFunction(const std::string &name, std::string &arguments)
 {
 	if(HasSymbol(name))
@@ -15,11 +21,8 @@ bool SymbolTable::AddFunction(const std::string &name, std::string &arguments)
 	sbl.type = SymbolType::FUNCTION;
 	m_Table.push_back(sbl);
 
-	//Reset counters for automatic memory allocation (non static)
-	m_ArgCounter = 0;
-	m_LocalCounter = 0;
 	//The following variables are not static anymore
-	SetParsingStatic(false);
+	SetParsingStatic(false, name);
 	
 	//Also add function arguments (parameters)
 	while(arguments.size() > 0)
@@ -76,16 +79,25 @@ bool SymbolTable::AddVariable(const std::string &name, bool isArg)
 			m_StaticCounter += 4; //Multitype support should use variable size here
 			break;
 		case SymbolType::LOCAL:
-			sbl.value = m_LocalCounter;
-			m_LocalCounter += 4; 
+			sbl.value = m_CurrentFunc.numLoc;
+			m_CurrentFunc.numLoc += 4; 
 			break;
 		case SymbolType::ARG:
-			sbl.value = m_ArgCounter;
-			m_ArgCounter += 4; 
+			sbl.value = m_CurrentFunc.numArg;
+			m_CurrentFunc.numArg += 4; 
 			break;
 	}
 	m_Table.push_back(sbl);
 	return true;
+}
+
+void SymbolTable::SetParsingStatic(bool staticSection /*= true*/, std::string functionName)
+{
+	m_ParsingStatic = staticSection;
+	//Prepare for next function
+	if (m_CurrentFunc.name.size() > 0) m_FuncTable.push_back(m_CurrentFunc);
+	m_CurrentFunc = SymbolTable::Func();
+	m_CurrentFunc.name = functionName;
 }
 
 void SymbolTable::AllocateStatic()
@@ -118,5 +130,25 @@ uint32 SymbolTable::GetValue(const std::string &name) const
 		if(sbl.name == name) return sbl.value;
 	}
 	std::cerr << "[SYMBOL] Could not find Symbol " << name << std::endl;
+	return 0;
+}
+
+uint32 SymbolTable::GetFunctionArgCount(const std::string &name) const
+{
+	for(auto func : m_FuncTable)
+	{
+		if(func.name == name) return func.numArg;
+	}
+	std::cerr << "[SYMBOL] Could not find Function " << name << std::endl;
+	return 0;
+}
+
+uint32 SymbolTable::GetFunctionVarCount(const std::string &name) const
+{
+	for(auto func : m_FuncTable)
+	{
+		if(func.name == name) return func.numLoc;
+	}
+	std::cerr << "[SYMBOL] Could not find Function " << name << std::endl;
 	return 0;
 }
