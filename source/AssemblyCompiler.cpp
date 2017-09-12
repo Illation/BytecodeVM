@@ -411,7 +411,7 @@ bool AssemblyCompiler::ParseLiteral(int32 &out, std::string &arguments)
         }
         else
         {
-            arg = stoi(arguments.substr(0, nDelim));
+            arg = arguments.substr(0, nDelim);
             arguments = arguments.substr(nDelim+1);
         }
 		if(m_pSymbolTable->HasSymbol(arg)) 

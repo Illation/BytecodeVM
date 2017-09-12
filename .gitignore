@@ -61,6 +61,8 @@ ipch/
 *.sln.docstates
 
 *.proj
+*.vcxproj
+*.vcxproj.filters
 *.sln
 
 #Linux Project files

@@ -27,6 +27,7 @@ project "Bytecode"
         objdir "obj/debug"
         defines { "_DEBUG" }
         flags { "Symbols" }
+		debugargs { "cRun", "./Programs/Functions/Functions.bca" }
     configuration "Release"
         targetdir "../bin/release/"
         objdir "obj/debug"
@@ -41,14 +42,16 @@ project "Bytecode"
 	defines { "PLATFORM_Linux", "__linux__" }
 	includedirs { "/usr/include" }
 
-    configuration {}
-
 	buildoptions_cpp
 	{
 		"-std=c++14",
 	}
 
+    configuration {}
+
     defines { "_CONSOLE" }
+
+	flags {"ExtraWarnings", "FatalWarnings"}
 
     files {
         path.join(SOURCE_DIR, "*.cpp"),
