@@ -87,9 +87,9 @@ bool AssemblyCompiler::Compile()
 		std::cerr << "[ASM CMP] Symbol table already created!" << std::endl;
 
     //Do compilation
-    if(!CompileHeader())return false;
     if(!BuildSymbolTable())return false;
     if(!CompileInstructions())return false;
+    if(!CompileHeader())return false;
 
     std::cout << "[ASM CMP] Compilation Complete, no errors detected!" << std::endl;
     m_State = CompState::COMPILED;
@@ -283,7 +283,7 @@ bool AssemblyCompiler::CompileHeader()
     WriteInt(m_pSymbolTable->GetStaticVarCount(), header);
 
     m_HeaderSize = header.size();
-    m_Bytecode.insert(m_Bytecode.end(), header.begin(), header.end());
+    m_Bytecode.insert(m_Bytecode.begin(), header.begin(), header.end());
     return true;
 }
 
