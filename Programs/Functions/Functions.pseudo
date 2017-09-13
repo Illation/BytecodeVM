@@ -3,15 +3,12 @@
 
 var a = 6
 var b = 11
-
 print_mult(a, b)
 
 a-=3
-
 print_mult(a, b)
 
 b-=5
-
 print_mult(a, b)
 
 void print_mult(var pm_a, var pm_b)

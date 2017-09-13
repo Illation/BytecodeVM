@@ -50,23 +50,16 @@ bool VirtualMachine::LoadProgram(std::string filename)
 }
 void VirtualMachine::SetProgram(std::vector<uint8> bytecode)
 {
-#ifdef WORD_BIG_ENDIAN
-    m_StackSize =   static_cast<uint8>(bytecode[3]) << 24 |
-                    static_cast<uint8>(bytecode[2]) << 16 |
-                    static_cast<uint8>(bytecode[1]) << 8 |
-                    static_cast<uint8>(bytecode[0]);
-#elif
-    m_StackSize =   static_cast<uint8>(bytecode[0]) << 24 |
-                    static_cast<uint8>(bytecode[1]) << 16 |
-                    static_cast<uint8>(bytecode[2]) << 8 |
-                    static_cast<uint8>(bytecode[3]);
-#endif
+	uint32 headerSize = sizeof(uint32)*2;
+	m_StackSize = Unpack<uint32>(0, bytecode); 
+	uint32 numStaticVars = Unpack<uint32>(1 * sizeof(uint32), bytecode);
 
-    m_NumInstructions = bytecode.size()-sizeof(int32); //Header size for now
-    m_HeapBase = m_NumInstructions + m_StackSize;
+    m_NumInstructions = bytecode.size()- headerSize; //Header size for now
+	m_StaticBase = m_NumInstructions + m_StackSize;
+	m_HeapBase = m_StaticBase + numStaticVars;
     for(uint32 i = 0; i < m_NumInstructions; ++i)
     {
-        m_RAM[i+m_StackSize] = bytecode[i+sizeof(int32)];
+        m_RAM[i+m_StackSize] = bytecode[i+ headerSize];
     } 
     ProgramLoaded = true;
 }
@@ -80,7 +73,7 @@ void VirtualMachine::Interpret()
     }
 
     m_ProgramCounter = m_StackSize;
-    while( m_ProgramCounter < m_HeapBase)
+    while( m_ProgramCounter < m_StaticBase)
     {
         assert(m_ProgramCounter - m_StackSize < m_NumInstructions);
 
@@ -90,6 +83,7 @@ void VirtualMachine::Interpret()
 
         switch(operation)
         {
+            //MEMORY OPERATIONS
             //Add a byte to the stack
             case Opcode::LITERAL:
             {
@@ -112,7 +106,6 @@ void VirtualMachine::Interpret()
             }
             continue;
 
-            //MEMORY OPERATIONS
             //put memory at address on stack
             case Opcode::LOAD:
             {
@@ -148,6 +141,17 @@ void VirtualMachine::Interpret()
             {
                 Push(Unpack<int32>(m_ARG+Pop()));
                 ++m_ProgramCounter;
+            }
+            continue;
+
+            //Mark (a) bytes on the heap as used and push a pointer to the base
+            case Opcode::ALLOC:
+            {
+            }
+            continue;
+            //Mark the space at (a) as unused
+            case Opcode::FREE:
+            {
             }
             continue;
 
@@ -327,6 +331,23 @@ T VirtualMachine::Unpack(uint32 address)
 					static_cast<uint8>(m_RAM[address+1]) << 16 |
 					static_cast<uint8>(m_RAM[address+2]) << 8 |
 					static_cast<uint8>(m_RAM[address+3]);
+#endif
+    return static_cast<T>(value);
+}
+template<typename T>
+T VirtualMachine::Unpack(uint32 address, std::vector<uint8> data)
+{
+	assert(data.size() > address + 3);
+#ifdef WORD_BIG_ENDIAN
+    uint32 value =	static_cast<uint8>(data[address+3]) << 24 |
+					static_cast<uint8>(data[address+2]) << 16 |
+					static_cast<uint8>(data[address+1]) << 8 |
+					static_cast<uint8>(data[address+0]);
+#elif
+    uint32 value =  static_cast<uint8>(data[address+0]) << 24 |
+					static_cast<uint8>(data[address+1]) << 16 |
+					static_cast<uint8>(data[address+2]) << 8 |
+					static_cast<uint8>(data[address+3]);
 #endif
     return static_cast<T>(value);
 }

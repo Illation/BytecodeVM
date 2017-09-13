@@ -163,3 +163,8 @@ uint32 SymbolTable::GetFunctionVarCount(const std::string &name) const
 	std::cerr << "[SYMBOL] Could not find Function " << name << std::endl;
 	return 0;
 }
+
+uint32 SymbolTable::GetStaticVarCount() const
+{
+	return m_StaticCounter;
+}

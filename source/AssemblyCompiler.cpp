@@ -81,6 +81,11 @@ bool AssemblyCompiler::Compile()
         return false;
     }
 
+	if(!m_pSymbolTable)
+		m_pSymbolTable = new SymbolTable(m_StackSize);
+	else
+		std::cerr << "[ASM CMP] Symbol table already created!" << std::endl;
+
     //Do compilation
     if(!CompileHeader())return false;
     if(!BuildSymbolTable())return false;
@@ -93,11 +98,6 @@ bool AssemblyCompiler::Compile()
 
 bool AssemblyCompiler::BuildSymbolTable()
 {
-	if(!m_pSymbolTable)
-		m_pSymbolTable = new SymbolTable(m_StackSize);
-	else
-		std::cerr << "[ASM CMP] Symbol table already created!" << std::endl;
-
 	for(uint32 line = 0; line < m_Lines.size(); ++line)
     {
         std::string opname;
@@ -280,6 +280,7 @@ bool AssemblyCompiler::CompileHeader()
 {
     std::vector<uint8> header;
     WriteInt(m_StackSize, header);
+    WriteInt(m_pSymbolTable->GetStaticVarCount(), header);
 
     m_HeaderSize = header.size();
     m_Bytecode.insert(m_Bytecode.end(), header.begin(), header.end());

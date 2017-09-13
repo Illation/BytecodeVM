@@ -5,6 +5,7 @@
 
 enum class Opcode : char
 {
+	//Memory Manipulation
     LITERAL,
     LITERAL_ARRAY,
 
@@ -13,7 +14,11 @@ enum class Opcode : char
     LOAD_LCL,
     STORE_LCL,
     LOAD_ARG,
+	
+	ALLOC,
+	FREE,
 
+	//Arithmetic / Logic
     ADD,
     SUB,
 
@@ -22,6 +27,7 @@ enum class Opcode : char
     NOT,
     EQUALS,
 
+	//Flow Control
     JMP,
     JMP_IF,
 
@@ -42,6 +48,9 @@ static std::map<std::string, Opcode> OpcodeNames
     {"LOAD_LCL", Opcode::LOAD_LCL},
     {"STORE_LCL", Opcode::STORE_LCL},
     {"LOAD_ARG", Opcode::LOAD_ARG},
+
+    {"ALLOC", Opcode::ALLOC},
+    {"FREE", Opcode::FREE},
 
     {"ADD", Opcode::ADD},
     {"SUB", Opcode::SUB},

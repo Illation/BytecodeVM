@@ -29,6 +29,7 @@ public:
 	uint32 GetValue(const std::string &name) const;
 	uint32 GetFunctionArgCount(const std::string &name) const;
 	uint32 GetFunctionVarCount(const std::string &name) const;
+	uint32 GetStaticVarCount()const;
 
 	uint32 m_NumInstructions = 0;
 

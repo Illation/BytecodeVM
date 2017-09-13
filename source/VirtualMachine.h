@@ -25,6 +25,8 @@ private:
     template<typename T>
     T Unpack(uint32 address);
     template<typename T>
+    T Unpack(uint32 address, std::vector<uint8> data);
+    template<typename T>
     void Pack(uint32 address, T value);
 
 private:
@@ -32,6 +34,7 @@ private:
     static const uint32 MAX_RAM = 536870912; //500 MB
     uint32 m_StackSize;
     uint32 m_NumInstructions = 0;
+	uint32 m_StaticBase = 0;
     uint32 m_HeapBase = 0;
 
 	//State
