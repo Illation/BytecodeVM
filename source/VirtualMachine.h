@@ -47,6 +47,7 @@ private:
     uint32 m_ProgramCounter = 0;
 
 	//Stack frame, potentially static variables if so desired
+	//***********
     int32 m_StackPointer = -4; 
 	uint32 m_LCL = 0;	//Current local base address
 	uint32 m_ARG = 0;	//Current argument base address
@@ -70,4 +71,8 @@ private:
 				ws 0		****Working Stack
 		SP->	ws 1
 	*/
+
+	//Dynamic Memory Allocation
+	//***************
+	uint32 m_FirstSegmentPtr = 0;
 };

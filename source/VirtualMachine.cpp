@@ -7,6 +7,7 @@
 
 #include "Opcode.h"
 #include "AtomicTypes.h"
+#include <limits>
 
 VirtualMachine::VirtualMachine()
 {
@@ -56,11 +57,18 @@ void VirtualMachine::SetProgram(std::vector<uint8> bytecode)
 
     m_NumInstructions = bytecode.size()- headerSize; //Header size for now
 	m_StaticBase = m_NumInstructions + m_StackSize;
-	m_HeapBase = m_StaticBase + numStaticVars;
     for(uint32 i = 0; i < m_NumInstructions; ++i)
     {
         m_RAM[i+m_StackSize] = bytecode[i+ headerSize];
     } 
+
+	//Initialize Dynamic memory allocation
+	m_FirstSegmentPtr = m_StaticBase + numStaticVars;
+	m_HeapBase = m_FirstSegmentPtr+sizeof(uint32);
+	Pack<uint32>(m_FirstSegmentPtr, m_HeapBase);
+	Pack<uint32>(m_HeapBase, MAX_RAM - m_HeapBase);
+	Pack<uint32>(m_HeapBase+sizeof(uint32), 0);
+
     ProgramLoaded = true;
 }
 
@@ -147,11 +155,76 @@ void VirtualMachine::Interpret()
             //Mark (a) bytes on the heap as used and push a pointer to the base
             case Opcode::ALLOC:
             {
+				uint32 requestedSize = Pop(); 
+				uint32 requiredSize = requestedSize + sizeof(uint32);//First 4 bytes of segment hold segment size -- maybe in future 4 more bytes for reference count
+
+				uint32 firstSegment = Unpack<uint32>(m_FirstSegmentPtr);
+				uint32 nextSegment = firstSegment;
+
+				uint32 bestFitSize = std::numeric_limits<uint32>::max();
+				uint32 bestFitPtr = 0;
+				uint32 prevNextPtr = m_FirstSegmentPtr;
+
+				//Get best fitting segment
+				bool earlyOut = false;
+				while (nextSegment != 0 && !earlyOut)
+				{
+					uint32 segmentSize = Unpack<uint32>(nextSegment);
+					if (segmentSize >= requiredSize && segmentSize < bestFitSize)
+					{
+						if (segmentSize == requiredSize) earlyOut = true;
+						bestFitPtr = nextSegment;
+						bestFitSize = segmentSize;
+						if(nextSegment != firstSegment)prevNextPtr = nextSegment + sizeof(uint32);
+					}
+					nextSegment = Unpack<uint32>(nextSegment + sizeof(uint32));
+				}
+				if (bestFitPtr == 0)
+				{
+					std::cerr << "[VM] Out of Memory Exception, could not allocate space for variable!" << std::endl;
+					return;
+				}
+				//use best found segment
+				uint32 remainingSize = bestFitSize - requiredSize;
+				if (remainingSize >= sizeof(uint32)*2)//Split segment in two if the remainder is big enough to allocate (ie its bigger than a segment header)
+				{
+					uint32 newSegPtr = bestFitPtr + requiredSize;
+					Pack<uint32>(newSegPtr, remainingSize); //set the new segment size
+					Pack<uint32>(newSegPtr + sizeof(uint32), Unpack<uint32>(bestFitPtr+sizeof(uint32))); //set the new segments nextPtr to the value of the allocated segments next ptr
+					Pack<uint32>(prevNextPtr, newSegPtr);//Link the previous segment to the new segment
+
+					Pack<uint32>(bestFitPtr, requiredSize); //Tell the allocated segment how big it is
+				}
+				else //Allocate the entire segment
+				{
+					Pack<uint32>(prevNextPtr, Unpack<uint32>(bestFitPtr+sizeof(uint32)));//Link the previous segment to next segment
+				}
+				Push(bestFitPtr+sizeof(uint32));
             }
             continue;
             //Mark the space at (a) as unused
             case Opcode::FREE:
             {
+				uint32 segmentPtr = Pop();
+				uint32 segmentSize = Unpack<uint32>(segmentPtr - sizeof(uint32));
+
+				uint32 firstSegment = Unpack<uint32>(m_FirstSegmentPtr);
+				uint32 nextSegment = firstSegment;
+
+				uint32 prevNextPtr = m_FirstSegmentPtr;
+				bool earlyOut = false;
+				while (nextSegment != 0 && !earlyOut)
+				{
+					uint32 segmentSize = Unpack<uint32>(nextSegment);
+					if (nextSegment != firstSegment)prevNextPtr = nextSegment + sizeof(uint32);
+
+					if (segmentPtr > nextSegment)
+					{
+						//insert
+					}
+
+					nextSegment = Unpack<uint32>(nextSegment + sizeof(uint32));
+				}
             }
             continue;
 
