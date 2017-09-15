@@ -205,25 +205,43 @@ void VirtualMachine::Interpret()
             //Mark the space at (a) as unused
             case Opcode::FREE:
             {
-				uint32 segmentPtr = Pop();
-				uint32 segmentSize = Unpack<uint32>(segmentPtr - sizeof(uint32));
+				uint32 segmentPtr = Pop()-sizeof(uint32);
+				uint32 segmentSize = Unpack<uint32>(segmentPtr);
 
 				uint32 firstSegment = Unpack<uint32>(m_FirstSegmentPtr);
-				uint32 nextSegment = firstSegment;
+				uint32 existingSegment = firstSegment;
 
 				uint32 prevNextPtr = m_FirstSegmentPtr;
 				bool earlyOut = false;
-				while (nextSegment != 0 && !earlyOut)
+				while (existingSegment != 0 && !earlyOut)
 				{
-					uint32 segmentSize = Unpack<uint32>(nextSegment);
-					if (nextSegment != firstSegment)prevNextPtr = nextSegment + sizeof(uint32);
-
-					if (segmentPtr > nextSegment)
+					if (segmentPtr > existingSegment)
 					{
 						//insert
-					}
+						bool standalone = true;
+						uint32 existingSize = Unpack<uint32>(existingSegment);
+						if (existingSegment + existingSize == segmentPtr)//Merge EXISTING+INSERTED
+						{
+							//simply expand the existing segment to accomodate our size
+							segmentPtr = existingSegment;
+							segmentSize += existingSize;
+							Pack<uint32>(segmentPtr, segmentSize);
+							standalone = false;
+						}
+						else
+						{
 
-					nextSegment = Unpack<uint32>(nextSegment + sizeof(uint32));
+						}
+						existingSegment = Unpack<uint32>(existingSegment + sizeof(uint32));
+						if (segmentPtr + segmentSize == existingSegment)//Merge INSERTED+NEXT
+						{
+							segmentSize += Unpack<uint32>(existingSegment);
+							Pack<uint32>(segmentPtr, segmentSize);
+							Pack<uint32>(segmentPtr + sizeof(uint32), Unpack<uint32>(existingSegment + sizeof(uint32)));
+						}
+						else if(standalone) Pack<uint32>(segmentPtr + sizeof(uint32), existingSegment);
+						earlyOut = true;
+					}
 				}
             }
             continue;
