@@ -5,6 +5,8 @@
 
 #include "AtomicTypes.h"
 
+#define VM_DEBUG_HEAP
+
 class VirtualMachine
 {
 public:
@@ -28,6 +30,8 @@ private:
     T Unpack(uint32 address, std::vector<uint8> data);
     template<typename T>
     void Pack(uint32 address, T value);
+
+	void PrintHeap(bool baseOffset = false);
 
 private:
     //Static Sizes

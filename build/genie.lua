@@ -27,7 +27,7 @@ project "Bytecode"
         objdir "obj/debug"
         defines { "_DEBUG" }
         flags { "Symbols" }
-		debugargs { "cRun", "./Programs/Functions/Functions.bca" }
+		debugargs { "cRun", "./Programs/DynamicAlloc/DynAlloc.bca" }
     configuration "Release"
         targetdir "../bin/release/"
         objdir "obj/debug"

@@ -67,7 +67,11 @@ void VirtualMachine::SetProgram(std::vector<uint8> bytecode)
 	m_HeapBase = m_FirstSegmentPtr+sizeof(uint32);
 	Pack<uint32>(m_FirstSegmentPtr, m_HeapBase);
 	Pack<uint32>(m_HeapBase, MAX_RAM - m_HeapBase);
-	Pack<uint32>(m_HeapBase+sizeof(uint32), 0);
+	Pack<uint32>(m_HeapBase + sizeof(uint32), 0);
+
+	#ifdef VM_DEBUG_HEAP
+		PrintHeap();
+	#endif
 
     ProgramLoaded = true;
 }
@@ -87,7 +91,7 @@ void VirtualMachine::Interpret()
 
         Opcode operation = static_cast<Opcode>(m_RAM[m_ProgramCounter]);
 
-		//std::cout << "[DBG] operation: " << GetOpString(operation) << std::endl;
+		std::cout << "[DBG] operation: " << GetOpString(operation) << std::endl;
 
         switch(operation)
         {
@@ -200,6 +204,11 @@ void VirtualMachine::Interpret()
 					Pack<uint32>(prevNextPtr, Unpack<uint32>(bestFitPtr+sizeof(uint32)));//Link the previous segment to next segment
 				}
 				Push(bestFitPtr+sizeof(uint32));
+                ++m_ProgramCounter;
+
+				#ifdef VM_DEBUG_HEAP
+					PrintHeap();
+				#endif
             }
             continue;
             //Mark the space at (a) as unused
@@ -210,7 +219,7 @@ void VirtualMachine::Interpret()
 
 				uint32 existingNextPtr = m_FirstSegmentPtr;
 				uint32 nextSegment = Unpack<uint32>(existingNextPtr);
-				uint32 existingSegment;
+				uint32 existingSegment = existingNextPtr;
 
 				bool earlyOut = false;
 				while (nextSegment != 0 && !earlyOut)
@@ -219,7 +228,7 @@ void VirtualMachine::Interpret()
 					{
 						//insert
 						bool standalone = true;
-						if ((existingNextPtr != m_FirstSegmentPtr) && (existingSegment + Unpack<uint32>(existingSegment) == segmentPtr))//Merge EXISTING+INSERTED
+						if ((nextSegment != m_FirstSegmentPtr) && (existingSegment + Unpack<uint32>(existingSegment) == segmentPtr))//Merge EXISTING+INSERTED
 						{
 							//simply expand the existing segment to accomodate our size
 							segmentPtr = existingSegment;
@@ -248,7 +257,13 @@ void VirtualMachine::Interpret()
 				if (!earlyOut)
 				{
 					std::cerr << "[VM] Failed to free memory at " << segmentPtr << "; " << segmentSize << " bytes" << std::endl;
+					return;
 				}
+                ++m_ProgramCounter;
+
+				#ifdef VM_DEBUG_HEAP
+					PrintHeap();
+				#endif
             }
             continue;
 
@@ -463,4 +478,19 @@ void VirtualMachine::Pack(uint32 address, T value)
    m_RAM[address+2] = (n >> 8) & 0xFF;
    m_RAM[address+3] = n & 0xFF;
 #endif
+}
+
+void VirtualMachine::PrintHeap(bool baseOffset)
+{
+	uint32 offset = baseOffset ? m_HeapBase : 0;
+	uint32 nextSegment = Unpack<uint32>(m_FirstSegmentPtr);
+
+	std::cout << "[DBG Heap]: "<< m_FirstSegmentPtr-offset << " first: " << nextSegment-offset << " \t";
+	while (nextSegment != 0)
+	{
+		std::cout << "@" << nextSegment-offset << "{s: " << Unpack<uint32>(nextSegment);
+		nextSegment = Unpack<uint32>(nextSegment + sizeof(uint32));
+		std::cout << "; n: " << nextSegment-offset << "} ";
+	}
+	std::cout << std::endl;
 }
