@@ -208,40 +208,46 @@ void VirtualMachine::Interpret()
 				uint32 segmentPtr = Pop()-sizeof(uint32);
 				uint32 segmentSize = Unpack<uint32>(segmentPtr);
 
-				uint32 firstSegment = Unpack<uint32>(m_FirstSegmentPtr);
-				uint32 existingSegment = firstSegment;
+				uint32 existingNextPtr = m_FirstSegmentPtr;
+				uint32 nextSegment = Unpack<uint32>(existingNextPtr);
+				uint32 existingSegment;
 
-				uint32 prevNextPtr = m_FirstSegmentPtr;
 				bool earlyOut = false;
-				while (existingSegment != 0 && !earlyOut)
+				while (nextSegment != 0 && !earlyOut)
 				{
-					if (segmentPtr > existingSegment)
+					if (segmentPtr < nextSegment)
 					{
 						//insert
 						bool standalone = true;
-						uint32 existingSize = Unpack<uint32>(existingSegment);
-						if (existingSegment + existingSize == segmentPtr)//Merge EXISTING+INSERTED
+						if ((existingNextPtr != m_FirstSegmentPtr) && (existingSegment + Unpack<uint32>(existingSegment) == segmentPtr))//Merge EXISTING+INSERTED
 						{
 							//simply expand the existing segment to accomodate our size
 							segmentPtr = existingSegment;
-							segmentSize += existingSize;
+							segmentSize += Unpack<uint32>(existingSegment);
 							Pack<uint32>(segmentPtr, segmentSize);
 							standalone = false;
 						}
 						else
 						{
-
+							Pack<uint32>(segmentPtr + sizeof(uint32), nextSegment);//next = existing.next
+							Pack<uint32>(existingNextPtr, segmentPtr); //existing.next = this
 						}
-						existingSegment = Unpack<uint32>(existingSegment + sizeof(uint32));
-						if (segmentPtr + segmentSize == existingSegment)//Merge INSERTED+NEXT
+						if (segmentPtr + segmentSize == nextSegment)//Merge INSERTED+NEXT
 						{
-							segmentSize += Unpack<uint32>(existingSegment);
+							segmentSize += Unpack<uint32>(nextSegment);
 							Pack<uint32>(segmentPtr, segmentSize);
-							Pack<uint32>(segmentPtr + sizeof(uint32), Unpack<uint32>(existingSegment + sizeof(uint32)));
+							Pack<uint32>(segmentPtr + sizeof(uint32), Unpack<uint32>(nextSegment + sizeof(uint32))); //next = next.next
 						}
-						else if(standalone) Pack<uint32>(segmentPtr + sizeof(uint32), existingSegment);
+						else if(standalone) Pack<uint32>(segmentPtr + sizeof(uint32), nextSegment);
 						earlyOut = true;
 					}
+					existingSegment = nextSegment;
+					existingNextPtr = existingSegment + sizeof(uint32);
+					nextSegment = Unpack<uint32>(existingNextPtr);
+				}
+				if (!earlyOut)
+				{
+					std::cerr << "[VM] Failed to free memory at " << segmentPtr << "; " << segmentSize << " bytes" << std::endl;
 				}
             }
             continue;
