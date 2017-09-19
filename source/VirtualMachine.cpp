@@ -53,7 +53,7 @@ void VirtualMachine::SetProgram(std::vector<uint8> bytecode)
 {
 	uint32 headerSize = sizeof(uint32)*2;
 	m_StackSize = Unpack<uint32>(0, bytecode); 
-	uint32 numStaticVars = Unpack<uint32>(1 * sizeof(uint32), bytecode);
+	auto numStaticVars = Unpack<uint32>(1 * sizeof(uint32), bytecode);
 
     m_NumInstructions = bytecode.size()- headerSize; //Header size for now
 	m_StaticBase = m_NumInstructions + m_StackSize;
@@ -89,7 +89,7 @@ void VirtualMachine::Interpret()
     {
         assert(m_ProgramCounter - m_StackSize < m_NumInstructions);
 
-        Opcode operation = static_cast<Opcode>(m_RAM[m_ProgramCounter]);
+        auto operation = static_cast<Opcode>(m_RAM[m_ProgramCounter]);
 
 		std::cout << "[DBG] operation: " << GetOpString(operation) << std::endl;
 
@@ -107,7 +107,7 @@ void VirtualMachine::Interpret()
             //Add multiple bytes to the stack
             case Opcode::LITERAL_ARRAY:
             {
-                int numValues = Unpack<int32>(++m_ProgramCounter);
+                auto numValues = Unpack<int32>(++m_ProgramCounter);
                 m_ProgramCounter+=sizeof(int32);
                 while(numValues > 0)
                 {
@@ -162,7 +162,7 @@ void VirtualMachine::Interpret()
 				uint32 requestedSize = Pop(); 
 				uint32 requiredSize = requestedSize + sizeof(uint32);//First 4 bytes of segment hold segment size -- maybe in future 4 more bytes for reference count
 
-				uint32 firstSegment = Unpack<uint32>(m_FirstSegmentPtr);
+				auto firstSegment = Unpack<uint32>(m_FirstSegmentPtr);
 				uint32 nextSegment = firstSegment;
 
 				uint32 bestFitSize = std::numeric_limits<uint32>::max();
@@ -173,7 +173,7 @@ void VirtualMachine::Interpret()
 				bool earlyOut = false;
 				while (nextSegment != 0 && !earlyOut)
 				{
-					uint32 segmentSize = Unpack<uint32>(nextSegment);
+					auto segmentSize = Unpack<uint32>(nextSegment);
 					if (segmentSize >= requiredSize && segmentSize < bestFitSize)
 					{
 						if (segmentSize == requiredSize) earlyOut = true;
@@ -215,10 +215,10 @@ void VirtualMachine::Interpret()
             case Opcode::FREE:
             {
 				uint32 segmentPtr = Pop()-sizeof(uint32);
-				uint32 segmentSize = Unpack<uint32>(segmentPtr);
+				auto segmentSize = Unpack<uint32>(segmentPtr);
 
 				uint32 existingNextPtr = m_FirstSegmentPtr;
-				uint32 nextSegment = Unpack<uint32>(existingNextPtr);
+				auto nextSegment = Unpack<uint32>(existingNextPtr);
 				uint32 existingSegment = existingNextPtr;
 
 				bool earlyOut = false;
@@ -425,7 +425,7 @@ void VirtualMachine::Push(int32 value)
 int VirtualMachine::Pop()
 {
     assert(m_StackPointer >= 0); //Invalid memory access "Stack underflow" - this does not protect against the SP underflowing the working stack
-    int32 value = Unpack<int32>(m_StackPointer);
+    auto value = Unpack<int32>(m_StackPointer);
     m_StackPointer -= sizeof(int32);
     return value;
 }
@@ -466,7 +466,7 @@ T VirtualMachine::Unpack(uint32 address, std::vector<uint8> data)
 template<typename T>
 void VirtualMachine::Pack(uint32 address, T value)
 {
-   uint32 n = static_cast<uint32>(value);
+   auto n = static_cast<uint32>(value);
 #ifdef WORD_BIG_ENDIAN
    m_RAM[address+3] = (n >> 24) & 0xFF;
    m_RAM[address+2] = (n >> 16) & 0xFF;
@@ -483,7 +483,7 @@ void VirtualMachine::Pack(uint32 address, T value)
 void VirtualMachine::PrintHeap(bool baseOffset)
 {
 	uint32 offset = baseOffset ? m_HeapBase : 0;
-	uint32 nextSegment = Unpack<uint32>(m_FirstSegmentPtr);
+	auto nextSegment = Unpack<uint32>(m_FirstSegmentPtr);
 
 	std::cout << "[DBG Heap]: "<< m_FirstSegmentPtr-offset << " first: " << nextSegment-offset << " \t";
 	while (nextSegment != 0)

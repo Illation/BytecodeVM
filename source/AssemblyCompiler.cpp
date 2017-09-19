@@ -11,9 +11,7 @@
 #include "SymbolTable.h"
 
 //Constructor Destructor
-AssemblyCompiler::AssemblyCompiler()
-{
-}
+AssemblyCompiler::AssemblyCompiler() = default;
 
 AssemblyCompiler::~AssemblyCompiler()
 {
@@ -48,7 +46,7 @@ bool AssemblyCompiler::LoadSource(std::string filename)
         m_Lines.push_back(line);
     }
 
-    if(m_Lines.size() <= 0)
+    if(m_Lines.empty())
     {
         std::cerr << "[ASM CMP] No assembly lines loaded" << std::endl;
         m_Lines.clear();
@@ -158,7 +156,7 @@ bool AssemblyCompiler::BuildSymbolTable()
                 }
                 else
                 {
-                    while(arguments.size() > 0)
+                    while(!arguments.empty())
                     {
                         m_pSymbolTable->m_NumInstructions+=4;
                         CheckVar(arguments);
@@ -237,7 +235,7 @@ bool AssemblyCompiler::CompileInstructions()
                     {
                         if(j >= arguments.size())
                         {
-                            std::cerr << "[ASM CMP] " << line << ", " << opname << ": Expected ' \" ' !" << std::endl;
+                            std::cerr << "[ASM CMP] " << line << ", " << opname << R"(: Expected ' " ' !)" << std::endl;
                             PrintAbort(line);
                             return false;
                         }
@@ -248,7 +246,7 @@ bool AssemblyCompiler::CompileInstructions()
                 }
                 else
                 {
-                    while(arguments.size() > 0)
+                    while(!arguments.empty())
                     {
                         int32 parsed;
                         if(ParseLiteral(parsed, arguments))
@@ -304,9 +302,9 @@ bool AssemblyCompiler::Save(std::string filename)
         return false;
     }
 
-    for(uint32 i = 0; i < m_Bytecode.size(); ++i)
+    for(uint8 i : m_Bytecode)
     {
-        output << m_Bytecode[i];
+        output << i;
     }
 
     std::cout << "[ASM CMP] Executable saved!" << std::endl;
@@ -329,7 +327,7 @@ bool AssemblyCompiler::TokenizeLine(std::string line, std::string &opname, std::
     if(line.size() > 1 && line[0] == '/' && line[1] == '/')
         return false;
     //Empty Line
-    if(line.size() == 0)
+    if(line.empty())
         return false;
     //get op and arguments
     std::size_t firstSpace = line.find(' ');
@@ -378,7 +376,7 @@ void AssemblyCompiler::CheckVar(std::string &arguments)
 
 bool AssemblyCompiler::HasValidArgs(std::string arguments, uint32 line, std::string opname)
 {
-    if(arguments.size()==0)
+    if(arguments.empty())
     {
         std::cerr <<"[ASM CMP] " << line << ", " << opname << ": Incorrect amount of arguments!" << std::endl;
         PrintAbort(line);

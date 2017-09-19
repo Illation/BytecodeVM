@@ -26,7 +26,7 @@ bool SymbolTable::AddFunction(const std::string &name, std::string &arguments)
 	m_NumInstructions += 8;//First two instructions are int32 numArgs and int32 numLoc
 	
 	//Also add function arguments (parameters)
-	while(arguments.size() > 0)
+	while(!arguments.empty())
 	{
 		std::string arg;
 		std::size_t nDelim = arguments.find(' ', 1);
@@ -98,7 +98,7 @@ void SymbolTable::SetParsingStatic(bool staticSection /*= true*/, std::string fu
 {
 	m_ParsingStatic = staticSection;
 	//Prepare for next function
-	if (m_CurrentFunc.name.size() > 0)
+	if (!m_CurrentFunc.name.empty())
 	{
 		m_FuncTable.push_back(m_CurrentFunc);
 		std::cout << "[SYMBOL] function: " << m_CurrentFunc.name << "; args: " << m_CurrentFunc.numArg << "; vars: " << m_CurrentFunc.numLoc << std::endl;
@@ -111,16 +111,16 @@ void SymbolTable::AllocateStatic()
 {
     std::cout << "[SYMBOL] Instruction count: " << m_NumInstructions << "; Symbols: " << std::endl;
     uint32 staticBase = m_StackSize + m_NumInstructions;
-    for(uint32 i = 0; i < m_Table.size(); ++i)
+    for(auto & sbl : m_Table)
     {
-        if(m_Table[i].type == SymbolType::STATIC)
+        if(sbl.type == SymbolType::STATIC)
         {
-            m_Table[i].value += staticBase;
+            sbl.value += staticBase;
         }
-        std::cout << "[SYMBOL] name: " << m_Table[i].name << "; value: " << m_Table[i].value << std::endl;
-        if(m_Table[i].type == SymbolType::FUNCTION)
+        std::cout << "[SYMBOL] name: " << sbl.name << "; value: " << sbl.value << std::endl;
+        if(sbl.type == SymbolType::FUNCTION)
         {
-			std::cout << "[SYMBOL]     instruction pointer: " << m_Table[i].value - m_StackSize << std::endl;
+			std::cout << "[SYMBOL]     instruction pointer: " << sbl.value - m_StackSize << std::endl;
         }
     }
 }
