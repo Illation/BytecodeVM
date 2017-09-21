@@ -9,14 +9,14 @@
 
 class VirtualMachine
 {
-public:
+    public:
     VirtualMachine();
     ~VirtualMachine();
 
     bool LoadProgram(std::string filename);
     void SetProgram(std::vector<uint8> bytecode);
 
-    void Interpret(); 
+    void Interpret();
 
 private:
     //Stack Manipulation
@@ -52,7 +52,7 @@ private:
 
 	//Stack frame, potentially static variables if so desired
 	//***********
-    int32 m_StackPointer = -4; 
+    int32 m_StackPointer = -4;
 	uint32 m_LCL = 0;	//Current local base address
 	uint32 m_ARG = 0;	//Current argument base address
 	uint32 m_RTN = 0;	//Current return address
@@ -61,7 +61,7 @@ private:
 	//Stack Frame Layout for function with n arguments and k locals
 	/*
 		ARG->	arg 0		****Arguments
-				arg 1		<--all arguments are items from previous functions working stack	
+				arg 1		<--all arguments are items from previous functions working stack
 				...
 				arg n-1
 		LCL-16->saved RTN	****Stack frame begin
